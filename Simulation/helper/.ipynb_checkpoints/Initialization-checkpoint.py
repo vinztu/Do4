@@ -1,5 +1,4 @@
 from collections import defaultdict
-import cityflow
 import json
 
 def initialize(sim):
@@ -16,7 +15,6 @@ def initialize(sim):
     sim.intersections_data:
         key: intersection_id
         values: {"inflow": [inflowing lanes], "outflow": [outflowing lanes], "neighbours": [all neighbouring intersections]
-    
     
     """
     
@@ -142,23 +140,37 @@ def initialize(sim):
             
     
     def find_neighbouring_intersections(sim):
-        """for each intersection, find its neighbours"""
+        """ For each intersection, find its neighbours"""
         
-        for intersection in sim.intersections_data.keys():
+        for intersection in sim.intersections_data:
             
             # take only the first two integers of each lane to get the intersection
             potent_neighbours = set(map(lambda x: f"intersection_{x.split('_')[1]}_{x.split('_')[2]}", sim.intersections_data[intersection]["inflow"]))
             
             # filter out virtual neighbours
             sim.intersections_data[intersection]["neighbours"] = set(filter(lambda x: x in sim.intersections_data.keys(), potent_neighbours))
-            
-            
+
+
+    def define_capacities(sim):
+        """ Can be used to load capacities for individual lanes """
+        
+        # json.load("capacity_file") (capacities for individual lanes)
+
+        # previously sim.params["capacity"] has been an int defined in parameter_loader.py
+        sim.params["capacity"] = {lane: sim.params["capacity"] for lane in sim.lanes_data}
+
+
     
-       
     # read from roadnet file and write back new phases  
     read_and_write_roadnet(sim)
     
     # find neighbouring intersections
     find_neighbouring_intersections(sim)
+
+    if not sim.algorithm == "MP":
+        # define lane capacities
+        define_capacities(sim)
+        
+        
     
     

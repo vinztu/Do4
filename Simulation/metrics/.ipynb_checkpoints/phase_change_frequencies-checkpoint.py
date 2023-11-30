@@ -6,9 +6,14 @@ class PhaseChangeFrequencyMetric:
         
         # only used for comparison reasons within function below
         self.old_phase = {intersection: -1 for intersection in sim.intersections_data}
+
+        # count number of possible updates
+        self.counter = 0
         
         
     def record_values(self, sim):
+
+        self.counter += 1
         
         for intersection in sim.intersections_data:
             
@@ -18,6 +23,7 @@ class PhaseChangeFrequencyMetric:
                 
                 
     def get_phase_frequencies(self):
-        # We take the average over all intersections
-        average_frequency = sum(self.number_of_phase_changes.values()) / len(self.number_of_phase_changes)
+        # We take the average over all intersections and divide by the maximal amount of possible updates
+        # The value will then be between [0,1]
+        average_frequency = sum(self.number_of_phase_changes.values()) / (len(self.number_of_phase_changes) * self.counter)
         return average_frequency

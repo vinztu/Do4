@@ -1,5 +1,6 @@
 import cityflow
 import json
+import os
 from collections import defaultdict
 
 class Simulation:
@@ -33,22 +34,25 @@ class Simulation:
         Continue the simulation for n_steps        
     """
     
-    def __init__(self, dir_config_file, thread_num, params, algorithm):
-        self.dir_config_file = dir_config_file
+    def __init__(self, params, algorithm):
+        self.dir_config_file = params["dir_config_file"]
         self.dir_roadnet_file = self.__load_roadnet_file_name()
-        self.thread_num = thread_num
-        self.engine = cityflow.Engine(dir_config_file, thread_num)
+        self.thread_num = params["thread_num"]
+        self.engine = cityflow.Engine(self.dir_config_file, self.thread_num)
         self.engine.reset()
         
         self.algorithm = algorithm
         self.params = params
         self.perform = self.__define_perform_dict()
-        self.lanes_data = None
-        self.intersections_data = None
+        self.lanes_data = None # will be defind in initialization.py
+        self.intersections_data = None # will be defind in initialization.py
+        
+        self.__ray_environment()
+        self.__gurobi_environment()
         
         
-    # retrieve file name for roadnet file 
     def __load_roadnet_file_name(self):
+        """ retrieve file name for roadnet file """
         with open(self.dir_config_file, 'r') as f:
             data = json.load(f)
             return "./" + data["dir"] + data["roadnetFile"]
@@ -64,3 +68,36 @@ class Simulation:
         }
         
         return perform
+    
+    
+    def __ray_environment(self):
+        
+        ray_needed = ["MP", "CA_MP"]
+        
+        if self.algorithm in ray_needed:
+            import ray
+
+            # Initialize ray to enable parallel computing
+            ray.init(runtime_env={
+                #'excludes': ['/Users/vinz/Documents/ETH/Do4/Simulation/CityFlow/examples/test/replay.txt'],
+                #"working_dir": "./",
+                "env_vars": {"PYTHONPATH":'/Users/vinz/Documents/ETH/Do4'},
+            })
+
+            num_cpu = os.cpu_count()
+            print(f"Number of CPUs in this system: {num_cpu}")
+    
+    
+    def __gurobi_environment(self):
+        
+        # list of all algorithms that need gurobi
+        gurobi_needed = ["Centralized"]
+        
+        if self.algorithm in gurobi_needed:
+            import gurobipy as gp
+            from gurobipy import GRB
+
+            # define the gurobi environment if needed
+            self.gurobi_env = gp.Env(empty=True) # Define gurobi optimization environment
+            self.gurobi_env.setParam("OutputFlag",0) # suppress gurobi optimization info
+            self.gurobi_env.start()

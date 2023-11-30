@@ -1,8 +1,11 @@
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from Simulation.helper.simulation_step import sim_step
+from Simulation.helper.tl_activation import activate_tl
 
 # import all algorithms
 from Simulation.algorithms.Max_Pressure import Max_Pressure
+from Simulation.algorithms.Capacity_Aware_MP import Capacity_Aware_MP
+from Simulation.algorithms.Centralized import Centralized_MP
 
 
 def sim_wrapper(sim, metrics_recorder):
@@ -14,6 +17,8 @@ def sim_wrapper(sim, metrics_recorder):
     # all available algorithms
     algorithms = {
         "MP": Max_Pressure,
+        "CA_MP": Capacity_Aware_MP,
+        "Centralized": Centralized_MP
     }
 
     # select the chosen algorithm
@@ -32,7 +37,10 @@ def sim_wrapper(sim, metrics_recorder):
         metrics_recorder.start_timer()
         
         # call the algorithm to update the tl
-        selected_algorithm(sim)
+        optimal_phases = selected_algorithm(sim)
+        
+        # activate the new traffic lights
+        activate_tl(sim, optimal_phases)
         
         # stop the simulation timer
         metrics_recorder.stop_timer()

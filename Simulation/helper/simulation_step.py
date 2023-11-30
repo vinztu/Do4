@@ -1,4 +1,4 @@
-from Simulation.helper.TL_Activation import idle_time_activate_tl
+from Simulation.helper.tl_activation import idle_time_activate_tl
 
 # proceed the simulation for Delta timesteps 
 def sim_step(sim, metrics_recorder, current_time):

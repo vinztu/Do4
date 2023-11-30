@@ -31,7 +31,7 @@ class ObjectiveValueMetric:
         # We take the average over all intersections
         # Transpose the data so that you iterate over time steps
         transposed_data_pres = zip(*self.pressure_values.values())
-        
+
         # Calculate the average for each time step
         averages_pres = [sum(time_step) / len(time_step) for time_step in transposed_data_pres]
         
