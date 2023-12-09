@@ -21,11 +21,13 @@ def generate_random_routes(roads_IN, roads_OUT, road_adj_to_IN, parameters):
     """Generate random combinations of roads. The amount of trafic can be specified
 
     Args:
-        roads (list[str]): list of all roads adjacent to a virtual intersection
-        trafic_amount (float): amount of trafic [0,1]
+        roads_IN (set[str]): set of all inflowing roads adjacent to a virtual intersection
+        roads_OUT (set[str]): set of all outflowing roads adjacent to a virtual intersection
+        road_adj_to_IN (set[str]): set with all adjacent roads
+        parameters (dict): parameters with demand ratio
 
     Returns:
-        list[str]: list of all combinations
+        dict: dict of all combinations
     """
     filtered_combinations = generate_valid_combinations(roads_IN, roads_OUT, road_adj_to_IN, parameters["traffic_ratio"])
     
@@ -34,6 +36,17 @@ def generate_random_routes(roads_IN, roads_OUT, road_adj_to_IN, parameters):
 
 
 def generate_specific_routes(roads_IN, roads_OUT, road_adj_to_IN, parameters):
+    """Generate combinations of roads. The amount of trafic is specified per main and side roads
+
+    Args:
+        roads_IN (set[str]): set of all inflowing roads adjacent to a virtual intersection
+        roads_OUT (set[str]): set of all outflowing roads adjacent to a virtual intersection
+        road_adj_to_IN (set[str]): set with all adjacent roads
+        parameters (dict): parameters with demand ratio
+
+    Returns:
+        dict: dict of all combinations
+    """
     
     # find all main inflowing and outflowing roads 
     main_roads_IN = [road for road in parameters["main_roads"] if road in roads_IN]
