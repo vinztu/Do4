@@ -20,26 +20,35 @@ def traffic_model_prediction(sim, model, opt_vars, lane_vehicle_count):
         for lane, lane_info in sim.lanes_data.items():
             
             # set initial conditions
-            if tau == 0:
-                model.addConstr(opt_vars["q"][tau, lane] == lane_vehicle_count[lane], name = f"q_{tau}_{lane}")
+            #if tau == 0:
+            #    model.addConstr(opt_vars["q"][tau, lane] == lane_vehicle_count[lane], name = f"q_{tau}_{lane}")
             
             
             # Incoming traffic
-            sum_inflow = traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update)
+            sum_inflow = traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update, lane_vehicle_count)
                 
                 
             # Outflowing traffic 
-            sum_outflow = traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstream_roads, tl_update)
+            sum_outflow = traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstream_roads, tl_update, lane_vehicle_count)
             
             
             # Combine Inflow and Outflow 
-            if tau != sim.params["prediction_horizon"]:
+            if tau == 0:
+                
+                model.addConstr((
+                    opt_vars["q"][tau + 1, lane] == lane_vehicle_count[lane] + sum_inflow - sum_outflow
+                    ),
+                    name = f"q_{tau+1}_{lane}"
+                )
+
+            elif tau != sim.params["prediction_horizon"]:
                 
                 model.addConstr((
                     opt_vars["q"][tau + 1, lane] == opt_vars["q"][tau, lane] + sum_inflow - sum_outflow
                     ),
                     name = f"q_{tau+1}_{lane}"
                 )
+            
                 
                     
             ################################################
@@ -59,8 +68,16 @@ def traffic_model_prediction(sim, model, opt_vars, lane_vehicle_count):
                 inter_id = lane_info[0]
                 downstream_lanes = lane_info[3]
                 
-                model.addConstr((
-                    opt_vars["p_m"][tau, inter_id, movement_id] == opt_vars["q"][tau, lane] - gp.quicksum(opt_vars["q"][tau, d_lane] for d_lane in downstream_lanes) / len(downstream_lanes)
-                    ),
-                    name = f"p_m_{tau}_{inter_id}_{movement_id}"
-                )
+                if tau == 0:
+                    model.addConstr((
+                        opt_vars["p_m"][tau, inter_id, movement_id] == lane_vehicle_count[lane] - gp.quicksum(lane_vehicle_count[d_lane] for d_lane in downstream_lanes) / len(downstream_lanes)
+                        ),
+                        name = f"p_m_{tau}_{inter_id}_{movement_id}"
+                    )
+                    
+                else:
+                    model.addConstr((
+                        opt_vars["p_m"][tau, inter_id, movement_id] == opt_vars["q"][tau, lane] - gp.quicksum(opt_vars["q"][tau, d_lane] for d_lane in downstream_lanes) / len(downstream_lanes)
+                        ),
+                        name = f"p_m_{tau}_{inter_id}_{movement_id}"
+                    )

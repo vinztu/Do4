@@ -1,7 +1,7 @@
 def load_parameters_common():
 
     # config file dir\n",
-    dir_config_file = 'CityFlow/examples/2x2/config.json'
+    dir_config_file = 'CityFlow/examples/test/config.json'
 
     # Common parameters for all algorithms
     dir_name = "first_try"

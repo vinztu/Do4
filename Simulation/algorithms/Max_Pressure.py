@@ -1,7 +1,6 @@
 import numpy as np
 import ray
 from Simulation.helper.pressure import compute_pressure
-from Simulation.helper.tl_activation import activate_tl
 
 def Max_Pressure(sim):
     """ Computes 1 iteration of the original MP algorithm
@@ -17,12 +16,12 @@ def Max_Pressure(sim):
 
     # serialization: cannot pickle 'cityflow.Engine' object
     # Due to serialization issues with ray, don't pass the cityflow.engine object into the ray.remote function
-    arguments = {
+    arguments = ray.put({
         "lane_vehicle_count": sim.engine.get_lane_vehicle_count(),
         "intersections_data": sim.intersections_data,
         "lanes_data": sim.lanes_data,
         "params": sim.params
-    }
+    })
 
         
     # Start a new process for each intersection

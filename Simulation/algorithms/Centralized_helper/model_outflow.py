@@ -1,7 +1,7 @@
 import gurobipy as gp
 from gurobipy import GRB
 
-def traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstream_roads, tl_update):
+def traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstream_roads, tl_update, lane_vehicle_count):
     """ Computes the outflow of cars into the lane at time tau"""
     
     inter_id = lane_info[0]
@@ -21,11 +21,20 @@ def traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstre
             visited_downstream_roads.add(downstream_road)
 
             # determine the lane with the maximal number of cars
-            model.addConstr((
-                opt_vars["max_lane"][tau, downstream_road] == gp.max_([opt_vars["q"][tau, d_lane] for d_lane in downstream_lanes])
-                ),
-                name = f"max_lane_{tau}_{downstream_road}"
-            )
+            if tau == 0:
+                model.addConstr((
+                    opt_vars["max_lane"][tau, downstream_road] == gp.max_([lane_vehicle_count[d_lane] for d_lane in downstream_lanes])
+                    ),
+                    name = f"max_lane_{tau}_{downstream_road}"
+                )
+                
+            else:
+                model.addConstr((
+                    opt_vars["max_lane"][tau, downstream_road] == gp.max_([opt_vars["q"][tau, d_lane] for d_lane in downstream_lanes])
+                    ),
+                    name = f"max_lane_{tau}_{downstream_road}"
+                )
+                
 
             # determine the max free capacity for the downstream road
             # assume all lanes in a road have the same capacity
@@ -37,11 +46,19 @@ def traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstre
 
 
         # determine the actual outflow out of a lane
-        model.addConstr((
-            opt_vars["outflow"][tau, lane] == gp.min_(opt_vars["q"][tau, lane], sim.params["saturation_flow"], opt_vars["free_capacity"])
-            ),
-            name = f"outflow_{tau}_{lane}"
-        )
+        if tau == 0:
+            model.addConstr((
+                opt_vars["outflow"][tau, lane] == gp.min_(lane_vehicle_count[lane], sim.params["saturation_flow"], opt_vars["free_capacity"][tau, downstream_road])
+                ),
+                name = f"outflow_{tau}_{lane}"
+            )
+            
+        else:
+            model.addConstr((
+                opt_vars["outflow"][tau, lane] == gp.min_(opt_vars["q"][tau, lane], sim.params["saturation_flow"], opt_vars["free_capacity"][tau, downstream_road])
+                ),
+                name = f"outflow_{tau}_{lane}"
+            )
 
         # return all possible phases that the current lane is part of
         possible_phases_per_lane = [phase for phase, phase_movements in sim.params["phases"].items() if movement_id in phase_movements]
@@ -51,7 +68,15 @@ def traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstre
     # if there are no downstream lanes, we assume that cars "disappear" with the saturation flow rate
     else:
 
-        model.addConstr((
+        if tau == 0:
+            model.addConstr((
+                opt_vars["outflow"][tau, lane] == gp.min_(lane_vehicle_count[lane], sim.params["saturation_flow"])
+                ),
+                name = f"outflow_{tau}_{lane}"
+            )
+            
+        else:
+            model.addConstr((
             opt_vars["outflow"][tau, lane] == gp.min_(opt_vars["q"][tau, lane], sim.params["saturation_flow"])
             ),
             name = f"outflow_{tau}_{lane}"

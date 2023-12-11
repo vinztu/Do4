@@ -16,8 +16,8 @@ def create_model(sim):
     # variables for phi
     phi = model.addVars(sim.params["num_tl_updates"], sim.intersections_data.keys(), sim.params["phases"], vtype = GRB.BINARY, name = "phi")
     
-    # variables for q
-    q = model.addVars(sim.params["prediction_horizon"] + 1, sim.lanes_data.keys(), vtype = GRB.CONTINUOUS, lb = 0, ub = max_capacity, name = "q")
+    # variables for q (the variable for time t=0 is not needed (constant))
+    q = model.addVars(range(1,sim.params["prediction_horizon"] + 1), sim.lanes_data.keys(), vtype = GRB.CONTINUOUS, lb = 0, ub = max_capacity, name = "q")
     
     # pressure per movement
     p_m = model.addVars(sim.params["prediction_horizon"] + 1, sim.intersections_data.keys(), sim.params["movements"], lb = -max_capacity, ub = max_capacity, vtype = GRB.CONTINUOUS, name = "p_m")
@@ -26,7 +26,7 @@ def create_model(sim):
     p_p = model.addVars(sim.params["prediction_horizon"] + 1, sim.intersections_data.keys(), sim.params["phases"].keys(), lb = -5*max_capacity, ub = 5*max_capacity, vtype = GRB.CONTINUOUS, name = "p_s")
     
     # inflow variables (min between q and saturation flow)
-    min_inflow = model.addVars(sim.params["prediction_horizon"] + 1, sim.lanes_data.keys(), lb = 0, ub = sim.params["saturation_flow"], vtype = GRB.CONTINUOUS, name = "min_inflow")
+    min_flow = model.addVars(sim.params["prediction_horizon"] + 1, sim.lanes_data.keys(), lb = 0, ub = sim.params["saturation_flow"], vtype = GRB.CONTINUOUS, name = "min_flow")
         
     # outflow variable (max number of cars on a lane)
     max_lane = model.addVars(sim.params["prediction_horizon"] + 1, road_names, lb = 0, ub = max_capacity, vtype = GRB.CONTINUOUS, name = "max_lane")
@@ -44,7 +44,7 @@ def create_model(sim):
         "q": q,
         "p_m": p_m,
         "p_p": p_p,
-        "min_inflow": min_inflow,
+        "min_flow": min_flow,
         "max_lane": max_lane,
         "free_capacity": free_capacity,
         "outflow": outflow

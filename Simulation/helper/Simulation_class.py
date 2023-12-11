@@ -91,7 +91,7 @@ class Simulation:
     def __gurobi_environment(self):
         
         # list of all algorithms that need gurobi
-        gurobi_needed = ["Centralized"]
+        gurobi_needed = ["Centralized", "LDPP"]
         
         if self.algorithm in gurobi_needed:
             import gurobipy as gp

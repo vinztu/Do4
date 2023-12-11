@@ -1,7 +1,7 @@
 import gurobipy as gp
 from gurobipy import GRB
 
-def traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update):
+def traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update, lane_vehicle_count):
     """ Computes the inflow of cars into the lane at time tau"""
     
     sum_inflow = 0
@@ -11,12 +11,20 @@ def traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update):
             
     # minimum between q and saturation flow
     # determines the maximal possible number of cars the can move in one time step
-    model.addConstr((
-        opt_vars["min_inflow"][tau, lane] == gp.min_(opt_vars["q"][tau, lane], sim.params["saturation_flow"])
-        ),
-        name = f"min_inflow_{tau}_{lane}"
-    )
+    if tau == 0:
+        model.addConstr((
+            opt_vars["min_flow"][tau, lane] == gp.min_(lane_vehicle_count[lane], sim.params["saturation_flow"])
+            ),
+            name = f"min_flow_{tau}_{lane}"
+        )
+    else:
+        model.addConstr((
+            opt_vars["min_flow"][tau, lane] == gp.min_(opt_vars["q"][tau, lane], sim.params["saturation_flow"])
+            ),
+            name = f"min_flow_{tau}_{lane}"
+        )
 
+        
     # if there are upstream lanes, the calculate the inflow, else set it to a constant flow
     if upstream_lanes:
 
@@ -37,7 +45,7 @@ def traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update):
                 possible_phases_per_u_lane = [0,1,2,3,4,5,6,7]
 
 
-            sum_inflow += (1/len(neighboring_lanes))*opt_vars["min_inflow"][tau, u_lane] * gp.quicksum([opt_vars["phi"][tl_update, u_lane_int_id, phi] for phi in possible_phases_per_u_lane])
+            sum_inflow += (1/len(neighboring_lanes))*opt_vars["min_flow"][tau, u_lane] * gp.quicksum([opt_vars["phi"][tl_update, u_lane_int_id, phi] for phi in possible_phases_per_u_lane])
 
     else:       
         sum_inflow = sim.params["exogenous_inflow"]
