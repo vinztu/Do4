@@ -1,4 +1,4 @@
-def pen_eval(x, arguments, intersection):
+def pen_eval(x, arguments, agent_intersection, it):
     """
     Continuous penalty evaluation (only penalty without pressure)
     
@@ -11,7 +11,7 @@ def pen_eval(x, arguments, intersection):
     arguments : dict
         Contains information about the sim object (Simulation class) such as intersections_data, lanes_data, params
     
-    intersection : string
+    agent_intersection : string
         Intersection id of the agent's intersection 
         
         
@@ -23,7 +23,7 @@ def pen_eval(x, arguments, intersection):
     
     total_penalty = 0.0
     
-    for lane in arguments["intersections_data"][intersection]["inflow"]:
+    for lane in arguments["intersections_data"][agent_intersection]["inflow"]:
         
         # movement_id and downstream lanes of lane
         movement_lane = arguments["lanes_data"][lane][1]
@@ -58,7 +58,8 @@ def pen_eval(x, arguments, intersection):
                 gamma = arguments["lane_vehicle_count"][d_lane]
                 
             else:
-                print(f'Wrong arguments["params"]["lane_weight"]: {Wrong arguments["params"]["lane_weight"]}')
+                print()
+                #print(f'Wrong arguments["params"]["lane_weight"]: {Wrong arguments["params"]["lane_weight"]}')
                 
             
             penalty = arguments["params"]["V"] * gamma
@@ -67,7 +68,7 @@ def pen_eval(x, arguments, intersection):
             # iterate over all phases that are included
             for phase_lane in corresponding_phase_lane:
                 for phase_d_lane in corresponding_phase_d_lane:
-                    if x[intersection_lane][phase_lane] == 1 and x[intersection_d_lane][phase_d_lane] == 1:
+                    if x[(it, agent_intersection)][phase_lane] == 1 and x[(it, intersection_d_lane)][phase_d_lane] == 1:
                         # subtracted (as it is a reward)
                         total_penalty -= penalty
         

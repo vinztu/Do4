@@ -1,8 +1,14 @@
 import copy
+import numpy as np
 
-def create_initial_values(arguments):
+def create_initial_values(arguments, intersection):
     """ Creates initial variables for the ADMM algorithm. It initializes all of them by
     a matrix that only contains one 1 per row
+    We need the following keys per intersection:
+    
+    neighbouring_id: {neighbour: [phases] for neighbour in neighbours[neighbour]}
+    
+    and this for all neighbouring_id's that are neighbours to intersection (neighbour's neighbours)
 
     Parameters
     ----------
@@ -15,41 +21,44 @@ def create_initial_values(arguments):
         A dictionary with intersection id's as keys and values are another dictionary. That dictionary has 
         neighbouring intersections as keys and binary phase variables as values
     
-    phi : dict
-        A dictionary with intersection id's as keys and binary phase variables as values
-    
     lambda_ : dict
         A dictionary with intersection id's as keys and the corresponding value is another dictionary. That dictionary has 
         neighbouring intersections as keys and binary phase variables as values
         lambda_ are the dual variables
     """
-    
-    
-    # ------------------------------------------------------------------------------------------------------------------
-    
-    x = {intersection: None for intersection in arguments["intersections_data"]}
-    phi = {intersection: None for intersection in arguments["intersections_data"]}
-    lambda_ = {intersection: None for intersection in arguments["intersections_data"]}
-    
-    
-    for intersection in sim.intersections_data:
+
         
-        temp_dict = {}
+    x = {}
+    lambda_ = {}
+    
+    # a list with all neighbouring intersections
+    neighbouring_intersections = arguments["intersections_data"][intersection]["neighbours"].union({intersection})
+    
+    for neighbour in neighbouring_intersections:
         
-        for neighbour in arguments["intersections_data"][intersection]["neighbours"]:
-            x_i = np.zeros(arguments["params"]["phases"] , dtype=bool)
-            
+        temp = {}
+        
+        neighbours_neighbouring_intersections = arguments["intersections_data"][neighbour]["neighbours"].union({neighbour})
+        
+        for neighbours_neighbour in neighbours_neighbouring_intersections:
+            x_i = np.zeros(len(arguments["params"]["phases"]) , dtype=int)
+
             # set 1 random entry to 1
-            idx = np.random.randint(arguments["params"]["phases"])
+            idx = np.random.randint(len(arguments["params"]["phases"]))
             x_i[idx] = 1
-            
-            temp_dict[neighbour] = x_i
-            
-            
-        # set initial values for all x, lambda and phi optimization variables
-        x[current_intersection] = temp_dict.copy()
-        lambda_[current_intersection] = temp_dict.copy()
-        phi[current_intersection] = x_i.copy()
+
+            temp[neighbours_neighbour] = x_i.copy()
         
+        # create a dict within a dict to match the format used later (it = 0)
+        x[(0, neighbour)] =  temp.copy()
+        lambda_[(0, neighbour)] = temp.copy()
+    
+    
+    # the neighbouring intersections will define z_g for "their" component/intersection
+    z_g = {(0, intersection): x_i.copy()}
         
-    return x, phi, lambda_
+    return x, lambda_, z_g
+
+
+
+        

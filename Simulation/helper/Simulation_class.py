@@ -72,7 +72,7 @@ class Simulation:
     
     def __ray_environment(self):
         
-        ray_needed = ["MP", "CA_MP"]
+        ray_needed = ["MP", "CA_MP", "LDPP"]
         
         if self.algorithm in ray_needed:
             import ray
@@ -90,8 +90,8 @@ class Simulation:
     
     def __gurobi_environment(self):
         
-        # list of all algorithms that need gurobi
-        gurobi_needed = ["Centralized", "LDPP"]
+        # list of all algorithms that need gurobi (not done for LDPP, since it cannot be serialized for ray --> env defined in LDPP_helper)
+        gurobi_needed = ["Centralized"]
         
         if self.algorithm in gurobi_needed:
             import gurobipy as gp

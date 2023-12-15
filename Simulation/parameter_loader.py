@@ -1,5 +1,8 @@
 def load_parameters_common():
 
+    # for cityflow engine
+    thread_num = 1
+    
     # config file dir\n",
     dir_config_file = 'CityFlow/examples/test/config.json'
 
@@ -36,11 +39,12 @@ def load_parameters_common():
     # saturation flow rate
     saturation_flow = 2
 
-    # for cityflow engine
-    thread_num = 1
+    # capacity of a lane (can load a json file in initialization.py with individual capacities)
+    capacity = 30
     
 
     common_params = {
+        "thread_num": thread_num,
         "dir_config_file": dir_config_file,
         "dir_name": dir_name,
         "filename": filename,
@@ -51,7 +55,7 @@ def load_parameters_common():
         "idle_time": idle_time,
         "sim_duration": sim_duration,
         "saturation_flow": saturation_flow, # could be made specific for each lane
-        "thread_num": thread_num
+        "capacity": capacity
     }
     
     return common_params
@@ -68,12 +72,10 @@ def load_parameters_MP():
 def load_parameters_CA_MP():
     # Additional parameters specific to CA_MP algorithm
 
-    capacity = 30 # can load a json file in initialization.py with individual capacities
     c_inf = 35
     m = 2
 
     ca_mp_params = {
-        "capacity": capacity,
         "c_inf": c_inf,
         "m": m
     }
@@ -83,16 +85,23 @@ def load_parameters_CA_MP():
 def load_parameters_Centralized(common_params):
     # Additional parameters specific to Centralized algorithm
     
-    capacity = 30                                                                             # can load a json file in initialization.py with individual capacities
-    scaling = 10                                                                              # reduces the amount of variables by /scaling (SCALING <= DELTA)
-    prediction_horizon = 2                                                                    # number of planning steps (actual horizon is * scaling)
-    num_tl_updates = ((prediction_horizon * scaling) // common_params["delta"]) + 1           # number of tl updates within the prediction horizon time span
-    exogenous_inflow = 0.1 * scaling                                                          # number of vehicles that enter from the outside per time step
-    alpha = 0.5                                                                               # discount parameter
+    # reduces the amount of variables by /scaling (SCALING <= DELTA)
+    scaling = 10
+    
+    # number of planning steps (actual horizon is * scaling)
+    prediction_horizon = 2
+    
+    # number of tl updates within the prediction horizon time span
+    num_tl_updates = ((prediction_horizon * scaling) // common_params["delta"]) + 1
+    
+    # number of vehicles that enter from the outside per time step
+    exogenous_inflow = 0.1 * scaling
+    
+    # discount parameter
+    alpha = 0.5                                                                               
     
     
     centralized_params = {
-        "capacity": capacity,
         "prediction_horizon": prediction_horizon,
         "num_tl_updates": num_tl_updates,
         "scaling": scaling,
@@ -103,6 +112,49 @@ def load_parameters_Centralized(common_params):
     return centralized_params
     
 
+def load_parameters_LDPP():
+    # Additional parameters specific to Centralized algorithm
+    
+    # maximal number of iterations for the ADMM algorithm
+    max_it = 20
+    
+    # lagrangian parameter rho
+    rho = 1
+    
+    # choose which penalty function to apply ("binary" or "continuous")
+    penalty_function = "binary"
+    
+    # determine domain for z ("binary" or "continuous") --> affects z-update
+    z_domain = "binary"
+    
+    lane_weight = "Constant"
+    
+    L = 10
+    V = 2
+    V1 = 2
+    V2 = 3
+    V3 = 1
+    
+    
+    # Tune in Simulation_class.py
+    #constant_weight 
+    
+    LDPP_params = {
+        "max_it": max_it,
+        "rho": rho,
+        "penalty_function": penalty_function,
+        "z_domain": z_domain,
+        "lane_weight": lane_weight,
+        "L": L,
+        "V1": V1,
+        "V2": V2,
+        "V3": V3,
+        "V": V
+    }
+    
+    return LDPP_params
+    
+    
 
 def load_parameters(algorithm):
     common_params = load_parameters_common()
@@ -115,6 +167,9 @@ def load_parameters(algorithm):
         common_params.update(ca_mp_params)
     elif algorithm == "Centralized":
         centralized_params = load_parameters_Centralized(common_params)
+        common_params.update(centralized_params)
+    elif algorithm == "LDPP":
+        centralized_params = load_parameters_LDPP()
         common_params.update(centralized_params)
     else:
         raise ValueError("Unsupported algorithm: {}".format(algorithm))

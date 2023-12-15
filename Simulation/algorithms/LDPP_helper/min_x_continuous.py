@@ -1,4 +1,8 @@
-def min_x(z, lambda_, pressure_per_phase, arguments, env, intersection):
+import gurobipy as gp
+from gurobipy import GRB
+import numpy as np
+
+def min_x(z_g, lambda_, pressure_per_phase, arguments, env, agent_intersection, it):
     """ Gurobi model and solver for minimizing the x variable for the ADMM-update 
     The continuous penalty is implemented here
     
@@ -33,31 +37,36 @@ def min_x(z, lambda_, pressure_per_phase, arguments, env, intersection):
     """
     
     # create a new model
-    m = gp.Model(f"min_x_{intersection}", env=env)
+    m = gp.Model(f"min_x_{agent_intersection}", env=env)
     
     # a list with all neghbouring intersections
-    neighbouring_intersections = arguments["intersections_data"][intersection]["neighbours"].union({intersection})
+    neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
     # Create variables
     x = m.addVars(neighbouring_intersections, len(arguments["params"]["phases"]), vtype=GRB.BINARY, name="x_i")
+    diff = m.addVars(neighbouring_intersections, len(arguments["params"]["phases"]), vtype=GRB.CONTINUOUS, lb = -2, ub = 2, name="diff")
+    norm = m.addVars(neighbouring_intersections, vtype=GRB.CONTINUOUS, name="norm_ADMM")
     
     
     # Add constraints such that there is only one phase active in one intersection
-    for intersection in neighbouring_intersections:
-        m.addConsr(x.sum(intersection, "*") == 1, name=f"phase_{intersection}")
+    for neighbour in neighbouring_intersections:
+        m.addConsr(x.sum(neighbour, "*") == 1, name=f"phase_{neighbour}")
     
     
-    # define a quadratic expression, since we have the norm squared
-    obj = gp.QuadExpr()
+    # define a linear part for the penalty function
+    f_i = gp.LinExpr(0)
+    
+    # define a quadratic expression for the ADMM consensus part
+    ADMM_obj = gp.QuadExpr(0)
     
     # add the standard pressure to the objective (MAX problem)
-    for intersection in neighbouring_intersections:
+    for neighbour in neighbouring_intersections:
         for phase in arguments["params"]["phases"]:
-            obj += x[intersection, phase] * pressure_per_phase[intersection][phase]
+            f_i.add(x[neighbour, phase], pressure_per_phase[neighbour][phase])
             
     
     # add penalty function to the objective
-    for lane in arguments["intersections_data"][intersection]["inflow"]:
+    for lane in arguments["intersections_data"][agent_intersection]["inflow"]:
         
         # movement_id and downstream lanes of lane
         movement_lane = arguments["lanes_data"][lane][1]
@@ -94,7 +103,7 @@ def min_x(z, lambda_, pressure_per_phase, arguments, env, intersection):
                 gamma = arguments["lane_vehicle_count"][d_lane]
                 
             else:
-                print(f'Wrong arguments["params"]["lane_weight"]: {Wrong arguments["params"]["lane_weight"]}')
+                print(f'Wrong arguments["params"]["lane_weight"]: {arguments["params"]["lane_weight"]}')
         
         
             penalty = arguments["params"]["V"] * gamma
@@ -103,16 +112,36 @@ def min_x(z, lambda_, pressure_per_phase, arguments, env, intersection):
             for phase_lane in corresponding_phase_lane:
                 for phase_d_lane in corresponding_phase_d_lane:
                     # add (as it is a reward)
-                    obj += penalty * x[intersection_lane][phase_lane] * x[intersection_d_lane][phase_d_lane]
+                    f_i += penalty * x[intersection_lane][phase_lane] * x[intersection_d_lane][phase_d_lane]
                     
         
-    # ADMM consensus terms
-    for intersection in neighbouring_intersections:
-        # ADD ADMM PART
+    ##################### ADMM TERMS #####################
+    # negative since its a maximization problem
+    for neighbour in neighbouring_intersections:
+        
+        # First Term (add 1 lambda * x term to the objective) (includes len(phases) terms)
+        ADMM_obj.add( -lambda_[(it, agent_intersection)][neighbour].T @ x.select(neighbour, '*'))
+        
+        
+        # Difference between x and z
+        m.addConstrs((
+                    diff[neighbour, phase] == x[neighbour, phase] - z_g[neighbour][phase]
+                    for phase in arguments["params"]["phases"]
+                    ),
+                    name = f"diff_{neighbour}"
+        )
+        
+        # LAST TERM
+        m.addGenConstrNorm(norm[neighbour], diff.select(neighbour, '*'), 2.0, "normconstr")
+        ADMM_obj -= norm[neighbour]*norm[neighbour]*RHO/2
 
+
+        
+    
+    ##################### COMBINE EVERYTHING #####################
 
     # set the objective of the model
-    m.setObjective(obj, GRB.MAXIMIZE)
+    m.setObjective(f_i + ADMM_obj, GRB.MAXIMIZE)
 
     # optimize model
     m.optimize()
@@ -133,5 +162,7 @@ def min_x(z, lambda_, pressure_per_phase, arguments, env, intersection):
         x_optimized[neighbour] = np.array([x_phase.X for x_phase in x.select(neighbour, '*')], dtype=int)
 
     m.dispose()
+    
+    x_agent = {(it + 1, agent_intersection): x_optimized}
 
     return x_optimized

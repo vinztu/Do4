@@ -6,6 +6,7 @@ from Simulation.helper.tl_activation import activate_tl
 from Simulation.algorithms.Max_Pressure import Max_Pressure
 from Simulation.algorithms.Capacity_Aware_MP import Capacity_Aware_MP
 from Simulation.algorithms.Centralized import Centralized_MP
+from Simulation.algorithms.LDPP import LDPP
 
 
 def sim_wrapper(sim, metrics_recorder):
@@ -18,7 +19,8 @@ def sim_wrapper(sim, metrics_recorder):
     algorithms = {
         "MP": Max_Pressure,
         "CA_MP": Capacity_Aware_MP,
-        "Centralized": Centralized_MP
+        "Centralized": Centralized_MP,
+        "LDPP": LDPP
     }
 
     # select the chosen algorithm
