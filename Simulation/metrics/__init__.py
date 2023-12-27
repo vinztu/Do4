@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from os import mkdir
+from os import makedirs
 from os.path import isdir
 
 from Simulation.metrics.computation_time import ComputationTimeMetric
@@ -137,11 +137,11 @@ class Metrics:
         # print(df)
 
         # if the directory does not exist, create a new one
-        dir_name = f"Simulation_Results/{sim.params['dir_name']}"
+        dir_name = f"Simulation_Results/{sim.params['road_network']}/Results/{sim.algorithm}"
         if not isdir(dir_name):
-            mkdir(dir_name)
+            makedirs(dir_name)
                 
         # Save DataFrame to CSV without index
-        with open(dir_name + "/" + sim.params["filename"] + "_" + str(current_round) + ".csv", 'w') as f:
+        with open(dir_name + "_" + str(current_round) + ".csv", 'w') as f:
             #f.write(f"# {sim.params}")
             df.to_csv(f, index = False)

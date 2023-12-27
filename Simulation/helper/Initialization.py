@@ -1,4 +1,5 @@
 from collections import defaultdict
+import numpy as np
 import json
 
 def initialize(sim):
@@ -159,6 +160,17 @@ def initialize(sim):
         # previously sim.params["capacity"] has been an int defined in parameter_loader.py
         sim.params["capacity"] = {lane: sim.params["capacity"] for lane in sim.lanes_data}
 
+    
+    def LDPP_T_initialization(sim):
+        """ Used to initialize an empty list for the penalty function in the LDPP algorithm """
+        sim.params["constant_weight"] = {lane: 1 for lane in sim.lanes_data}
+        sim.params["phase_history"] = {intersection: np.ones(sim.params["L"])*(-1) for intersection in sim.intersections_data}
+        
+    def LDPP_GF_initialization(sim):
+        """ Used to initialize the weight for each lane in the penalty. Here a different weight for each lane could be chosen. (Default: same for each lane)
+        Only active if algorithm = LDPP-GF and lane_weight = "constant"
+        """
+        sim.params["constant_weight"] = {lane: sim.params["constant_weight"] for lane in sim.lanes_data}
 
     
     # read from roadnet file and write back new phases  
@@ -171,6 +183,9 @@ def initialize(sim):
         # define lane capacities
         define_capacities(sim)
         
+    if "LDPP-T" in sim.algorithm:
+        LDPP_T_initialization(sim)
         
-    
-    
+    if "LDPP-GF" in sim.algorithm:
+        LDPP_GF_initialization(sim)
+        

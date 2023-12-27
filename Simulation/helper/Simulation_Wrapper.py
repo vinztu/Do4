@@ -1,4 +1,4 @@
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from Simulation.helper.simulation_step import sim_step
 from Simulation.helper.tl_activation import activate_tl
 
@@ -20,7 +20,10 @@ def sim_wrapper(sim, metrics_recorder):
         "MP": Max_Pressure,
         "CA_MP": Capacity_Aware_MP,
         "Centralized": Centralized_MP,
-        "LDPP": LDPP
+        "LDPP-T-ADMM": LDPP,
+        "LDPP-GF-ADMM": LDPP,
+        "LDPP-T-Greedy": LDPP,
+        "LDPP-GF-Greedy": LDPP
     }
 
     # select the chosen algorithm

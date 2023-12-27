@@ -72,7 +72,7 @@ class Simulation:
     
     def __ray_environment(self):
         
-        ray_needed = ["MP", "CA_MP", "LDPP"]
+        ray_needed = ["MP", "CA_MP", "LDPP-T-ADMM", "LDPP-GF-ADMM", "LDPP-T-Greedy", "LDPP-GF-Greedy"]
         
         if self.algorithm in ray_needed:
             import ray

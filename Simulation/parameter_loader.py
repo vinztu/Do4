@@ -3,12 +3,11 @@ def load_parameters_common():
     # for cityflow engine
     thread_num = 1
     
+    # Dir name where roadnet is stored and results will be saved
+    road_network = "3_4_Small_new"
+    
     # config file dir\n",
-    dir_config_file = 'CityFlow/examples/test/config.json'
-
-    # Common parameters for all algorithms
-    dir_name = "first_try"
-    filename = "try"
+    dir_config_file = f'Simulation_Results/{road_network}/config.json'
 
     # number of simulation rounds
     number_of_rounds = 2
@@ -46,8 +45,7 @@ def load_parameters_common():
     common_params = {
         "thread_num": thread_num,
         "dir_config_file": dir_config_file,
-        "dir_name": dir_name,
-        "filename": filename,
+        "road_network": road_network,
         "number_of_rounds": number_of_rounds,
         "phases": phases,
         "movements": movements,
@@ -112,7 +110,7 @@ def load_parameters_Centralized(common_params):
     return centralized_params
     
 
-def load_parameters_LDPP():
+def load_parameters_LDPP(algorithm):
     # Additional parameters specific to Centralized algorithm
     
     # maximal number of iterations for the ADMM algorithm
@@ -121,36 +119,34 @@ def load_parameters_LDPP():
     # lagrangian parameter rho
     rho = 1
     
-    # choose which penalty function to apply ("binary" or "continuous")
-    penalty_function = "binary"
-    
     # determine domain for z ("binary" or "continuous") --> affects z-update
-    z_domain = "binary"
+    z_domain = "continuous"
     
-    lane_weight = "Constant"
-    
-    L = 10
-    V = 2
-    V1 = 2
-    V2 = 3
-    V3 = 1
-    
-    
-    # Tune in Simulation_class.py
-    #constant_weight 
     
     LDPP_params = {
         "max_it": max_it,
         "rho": rho,
-        "penalty_function": penalty_function,
         "z_domain": z_domain,
-        "lane_weight": lane_weight,
-        "L": L,
-        "V1": V1,
-        "V2": V2,
-        "V3": V3,
-        "V": V
     }
+    
+    if "LDPP-T" in algorithm:
+        L = 10
+        V1 = 1
+        V2 = 1
+        V3 = 1
+        temp = {"L": L, "V1": V1, "V2": V2, "V3": V3}
+        
+    elif "LDPP-GF" in algorithm:
+        lane_weight = "constant" # or traffic_dependent
+        constant_weight = 1 # if lane_weight == "constant", choose the weight (or could be chosen to be different per lane in initialization.py)
+        V = 1
+        temp = {"lane_weight": lane_weight, "constant_weight": constant_weight, "V": V}
+        
+    else:
+        print(f"WRONG ALGORITHM NAME: {algorithm}! Choose either LDPP-T or LDPP-GF.")
+    
+    
+    LDPP_params.update(temp)
     
     return LDPP_params
     
@@ -168,8 +164,8 @@ def load_parameters(algorithm):
     elif algorithm == "Centralized":
         centralized_params = load_parameters_Centralized(common_params)
         common_params.update(centralized_params)
-    elif algorithm == "LDPP":
-        centralized_params = load_parameters_LDPP()
+    elif "LDPP" in algorithm:
+        centralized_params = load_parameters_LDPP(algorithm)
         common_params.update(centralized_params)
     else:
         raise ValueError("Unsupported algorithm: {}".format(algorithm))
