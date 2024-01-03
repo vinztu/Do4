@@ -3,9 +3,33 @@ from Simulation.algorithms.LDPP_helper.Greedy.check_agreement import check_agree
 from Simulation.algorithms.LDPP_helper.Greedy.determine_phases import determine_phases
 
 
-
 def Greedy(sim, pressure_per_phase_id, arguments_id):
+    """ Implements the Greedy loop to solve for the optimal phases
     
+    Parameters
+    -----------
+    sim : Simulation
+        Object of the Simulation Class
+    
+    pressure_pre_phase_id : ray.object
+        Stores the pressure per phase for each intersection
+    
+    arguments_id : ray.object
+        Stores data from sim (copy), since ray cannot serialize citylow objects
+    
+    
+    Returns
+    -----------
+    x : dict
+        Keys are intersection id's and values are np.arrays (one hot vector) where the optimal phase is active (=1)
+    
+    objective : dict
+        Keys are intersection id's and values are a list of the objective value throughout the ADMM iterations for each intersection
+    
+    pressure : dict
+        Keys are intersection id's and values are a list of the pressure value throughout the ADMM iterations for each intersection
+    
+    """
     
     ## initial values
     DET = {intersection: False for intersection in sim.intersections_data} # flag if intersection has terminated

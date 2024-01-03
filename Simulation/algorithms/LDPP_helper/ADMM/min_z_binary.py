@@ -20,7 +20,6 @@ def min_z(arguments, agent_intersection, x, lambda_):
     # a list with all neghbouring intersections
     neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
-    
     # Create variables
     z = m.addVars(len(arguments["params"]["phases"]), vtype=GRB.BINARY, name="z")
     

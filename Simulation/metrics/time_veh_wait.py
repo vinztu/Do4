@@ -6,7 +6,7 @@ class TimeWaitingMetric:
     
     """
     
-    def __init__(self):
+    def __init__(self, sim):
         # vehicles with speed less than 0.1m/s are considered as waiting.
         self.WAITING_SPEED = 0.1
         
@@ -17,8 +17,8 @@ class TimeWaitingMetric:
         # counts the longest CONSECUTIVE waiting time
         self.waiting_time_longest = defaultdict(int)
         
-        # stores the 20 longest CONSECUTIVE waiting times (over all vehicles)
-        self.waiting_time_max = [("", 0) for _ in range(20)]
+        # stores the 10% longest CONSECUTIVE waiting times (over all vehicles)
+        self.waiting_time_max = [("", 0) for _ in range(int(len(sim.lanes_data) * 0.1))]
         
         # stores the number of stops per vehicle
         self.number_of_stops = defaultdict(int)
@@ -48,7 +48,8 @@ class TimeWaitingMetric:
 
 
             # if the vehicle is faster than WAITING_SPEED, then the consecutive period is over
-            self.waiting_time_longest[vehicle_id] = 0
+            else:
+                self.waiting_time_longest[vehicle_id] = 0
             
     
     def get_average_waiting_time(self):

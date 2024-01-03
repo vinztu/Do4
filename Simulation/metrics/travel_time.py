@@ -42,7 +42,7 @@ class TravelTimeMetric:
         
         # take the average travel time over all vehicles
         # calculate the sum of distances, ignoring NaN values
-        values_array = np.array([travel_end - travel_start for travel_start, travel_end in self.travel_time_wo_buffer.values() if not any(np.isnan(x) for x in [travel_start, travel_end])])
+        values_array = np.array([travel_end - travel_start for travel_start, travel_end in self.travel_time_wo_buffer.values() if not np.isnan(travel_end)])
 
         # Calculate the sum of distances and divide by the count of non-NaN values
         average_travel_time_wo_buffer = np.nansum(values_array) / len(values_array)

@@ -6,7 +6,7 @@ def determine_phases(sim, DET, optimal_phases, objective, count_optima, consensu
     shuffled_intersection_id = list(sim.intersections_data.keys())
     random.shuffle(shuffled_intersection_id)
 
-    for intersection in sim.intersections_data.keys():
+    for intersection in shuffled_intersection_id:
 
         # if the intersection has already terminated, we skip it
         if DET[intersection]:

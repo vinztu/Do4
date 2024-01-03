@@ -9,10 +9,19 @@ from Simulation.algorithms.LDPP_helper.Greedy.fix_phases_constraint import fix_p
 @ray.remote
 def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ = None, DET = None, optimal_phases = None):
     """ Gurobi model and solver for minimizing the x variable for the ADMM-update 
-    The binary penalty is implemented here
+    The continuous penalty is implemented here
     
     Arguments:
     ------------
+    
+    pressure_per_phase : dict{list}
+        A dictionary with intersection id as keys and the inner list consists of the pressure per phase
+        
+    arguments : dict
+        Contains information about the sim object (Simulation class) such as intersections_data, lanes_data, params
+        
+    agent_intersection : string
+        Intersection id of the agent's intersection 
     
     z : dict
         A dictionary with intersection id's as keys and the binary phase variables as values
@@ -22,17 +31,14 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         neighbouring intersections as keys and binary phase variables as values
         lambda_ are the dual variables
         
-    pressure_per_phase : dict{list}
-        A dictionary with intersection id as keys and the inner list consists of the pressure per phase
-        
-    arguments : dict
-        Contains information about the sim object (Simulation class) such as intersections_data, lanes_data, params
+    DET : dict
+        Used in the Greedy algorithm to determine which intersection has already terminated and which is stil running
+        Keys are intersection id's and values are boolean values (True or False)
     
-    env
-        A gurobi environment. Used to suppress the output during the gurobi optimization steps
-    
-    agent_intersection : string
-        Intersection id of the agent's intersection 
+    optimal_phases : dict
+        Used in the Greedy algorithm that stores the optimal phase for each intersection in each round
+        In this function it is only used in case a neighbour has already terminated (this phase won't change anymore)
+        For neighbour's that are still running, "optimal_phases" won't be used
         
         
     Returns:
@@ -197,7 +203,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         m.addConstr(arguments["lane_vehicle_count"][lane] - outflow_gurobi + inflow_gurobi*R <= arguments["params"]["capacity"][lane] + big_M * h1[lane], name=f"h1_2_{lane}")
         
         # weight the value by the lane's weight
-        pen.add(h1[lane], - arguments["params"]["V1"] * arguments["params"]["constant_weight"][lane])
+        pen.add(h1[lane], arguments["params"]["V1"] * arguments["params"]["constant_weight"][lane])
         
         
         ##################### H2 PENALTY #####################
@@ -210,7 +216,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
                 m.addConstr(arguments["lane_vehicle_count"][d_lane] - outflow_d_gurobi[d_lane] + outflow_gurobi  <= arguments["params"]["capacity"][d_lane] + big_M * h2[lane, d_lane], name=f"h2_2_{lane}_{d_lane}")
                 
                 # weight the value by the lane's weight
-                pen.add(h2[lane, d_lane], - arguments["params"]["V2"] * arguments["params"]["constant_weight"][d_lane])
+                pen.add(h2[lane, d_lane], arguments["params"]["V2"] * arguments["params"]["constant_weight"][d_lane])
         
 
     
@@ -226,7 +232,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
 
         
     
-    ##################### COMBINE EVERYTHING #####################
+    ##################### COMBINE EVERYTHING AND SOLVE #####################
         
     # set the objective of the model
     m.setObjective(pressure - pen - ADMM_obj, GRB.MAXIMIZE)
@@ -254,7 +260,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         assert sum(x_optimized[neighbour]) == 1 # asdkfjalskdjflakdsjfaöklsdjföajsdfasdlfjlaskdjfaskd
 
     obj_val = m.ObjVal
-    pressure_val = pressure.getValue()
+    pressure_val = pressure_per_phase[agent_intersection][np.argmax(x_optimized[agent_intersection])]
     
     m.dispose()
 

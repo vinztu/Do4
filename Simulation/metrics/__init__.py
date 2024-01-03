@@ -3,6 +3,8 @@ import pandas as pd
 from os import makedirs
 from os.path import isdir
 
+from Simulation.metrics.load_params import load_specific_params
+
 from Simulation.metrics.computation_time import ComputationTimeMetric
 from Simulation.metrics.objective import ObjectiveValueMetric
 from Simulation.metrics.travel_time import TravelTimeMetric
@@ -27,7 +29,7 @@ class Metrics:
         self.throughput = ThroughputMetric(sim)
         self.vehicle_speed = AverageVehicleSpeedMetric()
         self.num_waiting = NumWaitingMetric()
-        self.time_waiting = TimeWaitingMetric()
+        self.time_waiting = TimeWaitingMetric(sim)
         self.num_ent_vehicle = NumberVehicleEnteredMetric()
         self.phase_change = PhaseChangeFrequencyMetric(sim)
         
@@ -101,6 +103,7 @@ class Metrics:
         time = np.arange(0, sim.params["sim_duration"], sim.params["delta"])
         
         # since this list is shorter, we need to pad it in order to fit it in the same df
+        Waiting_Time_Per_Vehicle = self.__extend_list(self.time_waiting.get_average_waiting_time())
         Waiting_Time_Per_Vehicle_Max = self.__extend_list(self.time_waiting.get_max_waiting_time())
         Travel_time_w_Buffer = self.__extend_list(self.travel_time.get_travel_time_w_buffer(sim))
         Travel_time_wo_Buffer = self.__extend_list(self.travel_time.get_travel_time_wo_buffer())
@@ -122,26 +125,39 @@ class Metrics:
             "Waiting Vehicles Per Intersection": self.num_waiting.get_average_num_per_intersection(),
             "Waiting Vehicles Per Lane": self.num_waiting.get_average_number_per_lane(),
             "Waiting Vehicles Per Lane Max": self.num_waiting.get_max_number_per_lane(),
-            "Waiting Time Per Vehicle": self.time_waiting.get_average_waiting_time(),
+            "Waiting Time Per Vehicle": Waiting_Time_Per_Vehicle,
             "Waiting Time Per Vehicle Max":  Waiting_Time_Per_Vehicle_Max,
             "Number of Stops": Number_of_Stops,
             "Number of Vehicles Entered the Network": Num_ent_Vehicles,
             "Phase Change Frequency": Phase_Change_Frequency
         }
         
+        # important meta information
+        meta_information = {
+            "phases": len(sim.params["phases"]),
+            "delta": sim.params["delta"],
+            "idle_time": sim.params["idle_time"],
+            "sim_duration": sim.params["sim_duration"],
+            "saturation_flow": sim.params["saturation_flow"],
+            "capacity": max(sim.params["capacity"].values())
+        }
+        important_info, specific_parameters = load_specific_params(sim)
+        meta_information.update(specific_parameters)
         
+        
+            
         # Convert the dictionary to a DataFrame
         df = pd.DataFrame(performance)
 
-        # Display the DataFrame
-        # print(df)
 
         # if the directory does not exist, create a new one
-        dir_name = f"Simulation_Results/{sim.params['road_network']}/Results/{sim.algorithm}"
+        dir_name = f"Simulation_Results/{sim.params['road_network']}/Results/{sim.algorithm + '_' + '_'.join(str(info) for info in important_info)}"
+        
         if not isdir(dir_name):
             makedirs(dir_name)
+        
                 
         # Save DataFrame to CSV without index
-        with open(dir_name + "_" + str(current_round) + ".csv", 'w') as f:
-            #f.write(f"# {sim.params}")
+        with open(dir_name + "/" + str(current_round) + ".csv", 'w') as f:
+            f.write(f"# {meta_information} \n")
             df.to_csv(f, index = False)

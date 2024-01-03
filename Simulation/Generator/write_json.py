@@ -3,7 +3,7 @@ import random
 import json
 import os
 from collections import Counter, defaultdict
-from Generator.generate_routes import generate_random_routes, generate_specific_routes
+from generator.generate_routes import generate_random_routes, generate_specific_routes
 
 def write_json_flow_file(vehLen: int = 5,
                          vehWidth: int = 2,

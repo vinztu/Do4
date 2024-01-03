@@ -1,10 +1,10 @@
-def load_parameters_common():
+def load_parameters_common(road_network):
 
     # for cityflow engine
     thread_num = 1
     
     # Dir name where roadnet is stored and results will be saved
-    road_network = "3_4_Small_new"
+    road_network = road_network
     
     # config file dir\n",
     dir_config_file = f'Simulation_Results/{road_network}/config.json'
@@ -117,10 +117,10 @@ def load_parameters_LDPP(algorithm):
     max_it = 20
     
     # lagrangian parameter rho
-    rho = 1
+    rho = 0
     
     # determine domain for z ("binary" or "continuous") --> affects z-update
-    z_domain = "continuous"
+    z_domain = "binary"
     
     
     LDPP_params = {
@@ -131,15 +131,15 @@ def load_parameters_LDPP(algorithm):
     
     if "LDPP-T" in algorithm:
         L = 10
-        V1 = 1
-        V2 = 1
-        V3 = 1
+        V1 = 0
+        V2 = 0
+        V3 = 0
         temp = {"L": L, "V1": V1, "V2": V2, "V3": V3}
         
     elif "LDPP-GF" in algorithm:
         lane_weight = "constant" # or traffic_dependent
         constant_weight = 1 # if lane_weight == "constant", choose the weight (or could be chosen to be different per lane in initialization.py)
-        V = 1
+        V = 0
         temp = {"lane_weight": lane_weight, "constant_weight": constant_weight, "V": V}
         
     else:
@@ -152,8 +152,8 @@ def load_parameters_LDPP(algorithm):
     
     
 
-def load_parameters(algorithm):
-    common_params = load_parameters_common()
+def load_parameters(algorithm, road_network, ext_dict = None):
+    common_params = load_parameters_common(road_network)
     
     if algorithm == "MP":
         mp_params = load_parameters_MP()
@@ -169,6 +169,11 @@ def load_parameters(algorithm):
         common_params.update(centralized_params)
     else:
         raise ValueError("Unsupported algorithm: {}".format(algorithm))
+        
+    # in case parameters are loaded from outside of this function, we will overwrite the values here
+    # otherwise use the values defined above
+    # this allows for running multiple rounds of simulation with different parameters
+    common_params.update(ext_dict)
     
     return common_params
 

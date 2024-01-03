@@ -9,11 +9,10 @@ def ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections,
     diff = m.addVars(neighbouring_intersections, len(arguments["params"]["phases"]), vtype=GRB.CONTINUOUS, lb = -2, ub = 2, name="diff")
     norm = m.addVars(neighbouring_intersections, vtype=GRB.CONTINUOUS, name="norm_ADMM")
     
-    # negative since its a maximization problem
     for neighbour in neighbouring_intersections:
         
         # First Term (add 1 lambda * x term to the objective) (includes len(phases) terms)
-        ADMM_obj.add( -lambda_[agent_intersection][neighbour].T @ x.select(neighbour, '*'))
+        ADMM_obj.add(lambda_[agent_intersection][neighbour].T @ x.select(neighbour, '*'))
         
         
         # Difference between x and z
@@ -26,4 +25,4 @@ def ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections,
         
         # LAST TERM
         m.addGenConstrNorm(norm[neighbour], diff.select(neighbour, '*'), 2.0, "normconstr")
-        ADMM_obj -= norm[neighbour]*norm[neighbour]*arguments["params"]["rho"]/2
+        ADMM_obj += norm[neighbour]*norm[neighbour]*arguments["params"]["rho"]/2

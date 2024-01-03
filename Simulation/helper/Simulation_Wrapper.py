@@ -44,11 +44,11 @@ def sim_wrapper(sim, metrics_recorder):
         # call the algorithm to update the tl
         optimal_phases = selected_algorithm(sim)
         
-        # activate the new traffic lights
-        activate_tl(sim, optimal_phases)
-        
         # stop the simulation timer
         metrics_recorder.stop_timer()
+        
+        # activate the new traffic lights
+        activate_tl(sim, optimal_phases)
         
         # advance the simulation by (Delta - idle_time) time steps
         # followed be the simulation of the idle time

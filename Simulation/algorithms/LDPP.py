@@ -41,11 +41,14 @@ def LDPP(sim):
     highest_phases = {}
     for intersection in sim.intersections_data:
         
+        chosen_phase = np.argmax(x[intersection][intersection])
+        assert pressure[intersection][-1] == pressure_pp[intersection][chosen_phase], f"wrong pressure gurobi {pressure[intersection][-1]} and pressure {pressure_pp[intersection][chosen_phase]}"
+        
         # update values for performance metrics
         # only take those pressures into account for which the phase got selected
         sim.perform["current_pressure"][intersection] = pressure[intersection][-1]
         sim.perform["current_objective"][intersection] = objective[intersection][-1]
-        highest_phases[intersection] = np.argmax(x[intersection])
+        highest_phases[intersection] = np.argmax(x[intersection][intersection])
         
         if "LDPP-T" in sim.algorithm:
             # update past decisions (delete last entry and add the latest phase)

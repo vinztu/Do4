@@ -3,6 +3,11 @@ class ThroughputMetric:
     Records the throughput of an intersection within a Delta time frame. The 
     throughput is defined as the number of cars that was able to pass through the intersection
     within Delta time steps
+    
+    It is calculated as follows:
+    old_vehicles_set stores the vehicle id's that were present on an intersection in the previous time step
+    new_vehicles_set stores all veicle id's that are present in the new time step
+    The vehicles that were present in old_vehicles_set but not in new_vehicles_set have left the intersection --> cars_passed += 1
     """
     
     def __init__(self, sim):
@@ -13,6 +18,9 @@ class ThroughputMetric:
         # store all vehicle id's that were at an intersection in the previous tl update
         self.old_vehicles_set = {intersection: set() for intersection in sim.intersections_data}
         
+        # the amount of cars left in delta time
+        self.cars_passed = {intersection: 0 for intersection in sim.intersections_data}
+        
         # store the actual throughput within Delta time steps
         self.throughput = {intersection: [] for intersection in sim.intersections_data}
         
@@ -20,6 +28,9 @@ class ThroughputMetric:
     def record_values(self, sim, current_time):
         
         vehicles_ids = sim.engine.get_vehicles()
+        
+        # reset the new set
+        self.new_vehicles_set = {intersection: set() for intersection in sim.intersections_data}
         
         for vehicle in vehicles_ids:
             vehicle_info = sim.engine.get_vehicle_info(vehicle)
@@ -35,27 +46,29 @@ class ThroughputMetric:
                 # if not already present in the set, then add the vehicle id
                 self.new_vehicles_set[current_intersection].add(vehicle)
 
-                    
-                    
+        
+        for intersection in sim.intersections_data:
+            # check set with previous round to see if some cars left the intersection
+            remaining_cars = self.old_vehicles_set[intersection].intersection(self.new_vehicles_set[intersection])
+
+            # the ones that are not here anymore, left the intersection
+            self.cars_passed[intersection] += len(self.old_vehicles_set[intersection]) - len(remaining_cars)
+        
+        # update the "old" set
+        self.old_vehicles_set = self.new_vehicles_set
+        
+        
         # here we take the average every Delta timesteps and reset the dict
-        # note that this might increase the througput as we reset the time values
         if current_time % sim.params["delta"] == 0:
             
             for intersection in sim.intersections_data:
                 
-                # check which vehicles that were at the beginning at an intersection
-                # are still there
-                remaining_cars = self.old_vehicles_set[intersection].intersection(self.new_vehicles_set[intersection])
-                
-                # the difference is the amount of cars that was able to pass through the intersection
                 # the average per time step is then divided by Delta
-                self.throughput[intersection].append((len(self.old_vehicles_set[intersection]) - len(remaining_cars)) / sim.params["delta"])
+                self.throughput[intersection].append(self.cars_passed[intersection] / sim.params["delta"])
                 
+                # reset the counter to 0
+                self.cars_passed[intersection] = 0
                 
-                
-            # set the old vehicles set to the new one and clear the new one
-            self.old_vehicles_set = self.new_vehicles_set
-            self.new_vehicles_set = {intersection: set() for intersection in sim.intersections_data}
                    
                     
     def get_througput(self):

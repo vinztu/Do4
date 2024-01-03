@@ -14,6 +14,15 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     Arguments:
     ------------
     
+    pressure_per_phase : dict{list}
+        A dictionary with intersection id as keys and the inner list consists of the pressure per phase
+        
+    arguments : dict
+        Contains information about the sim object (Simulation class) such as intersections_data, lanes_data, params
+        
+    agent_intersection : string
+        Intersection id of the agent's intersection 
+    
     z : dict
         A dictionary with intersection id's as keys and the binary phase variables as values
     
@@ -22,17 +31,14 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         neighbouring intersections as keys and binary phase variables as values
         lambda_ are the dual variables
         
-    pressure_per_phase : dict{list}
-        A dictionary with intersection id as keys and the inner list consists of the pressure per phase
-        
-    arguments : dict
-        Contains information about the sim object (Simulation class) such as intersections_data, lanes_data, params
+    DET : dict
+        Used in the Greedy algorithm to determine which intersection has already terminated and which is stil running
+        Keys are intersection id's and values are boolean values (True or False)
     
-    env
-        A gurobi environment. Used to suppress the output during the gurobi optimization steps
-    
-    intersection : string
-        Intersection id of the agent's intersection 
+    optimal_phases : dict
+        Used in the Greedy algorithm that stores the optimal phase for each intersection in each round
+        In this function it is only used in case a neighbour has already terminated (this phase won't change anymore)
+        For neighbour's that are still running, "optimal_phases" won't be used
         
         
     Returns:
@@ -119,8 +125,8 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
             # iterate over all phases that are included
             for phase_lane in corresponding_phase_lane:
                 for phase_d_lane in corresponding_phase_d_lane:
-                    # add (as it is a reward)
-                    pen += penalty * x[agent_intersection, phase_lane] * x[intersection_d_lane, phase_d_lane]
+                    # subtract (as it is a reward)
+                    pen -= penalty * x[agent_intersection, phase_lane] * x[intersection_d_lane, phase_d_lane]
                     
         
     ##################### ADMM TERMS #####################
@@ -132,10 +138,10 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections, x, lambda_, z, ADMM_obj)
         
     
-    ##################### COMBINE EVERYTHING #####################
+    ##################### COMBINE EVERYTHING AND SOLVE #####################
 
     # set the objective of the model
-    m.setObjective(pressure + pen + ADMM_obj, GRB.MAXIMIZE)
+    m.setObjective(pressure - pen - ADMM_obj, GRB.MAXIMIZE)
 
     # optimize model
     m.optimize()
@@ -156,7 +162,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         x_optimized[neighbour] = np.array([x_phase.X for x_phase in x.select(neighbour, '*')], dtype=int)
 
     obj_val = m.ObjVal
-    pressure_val = pressure.getValue()
+    pressure_val = pressure_per_phase[agent_intersection][np.argmax(x_optimized[agent_intersection])]
     
     m.dispose()
 

@@ -51,6 +51,11 @@ class Simulation:
         self.__gurobi_environment()
         
         
+    def reset_variables(self):
+        self.engine.reset()
+        self.perform = self.__define_perform_dict()
+        
+        
     def __load_roadnet_file_name(self):
         """ retrieve file name for roadnet file """
         with open(self.dir_config_file, 'r') as f:
@@ -76,15 +81,18 @@ class Simulation:
         
         if self.algorithm in ray_needed:
             import ray
+            
+            num_cpu = os.cpu_count()
 
             # Initialize ray to enable parallel computing
-            ray.init(runtime_env={
+            ray.init(
+                num_cpus = num_cpu,
+                runtime_env={
                 #'excludes': ['/Users/vinz/Documents/ETH/Do4/Simulation/CityFlow/examples/test/replay.txt'],
                 #"working_dir": "./",
                 "env_vars": {"PYTHONPATH":'/Users/vinz/Documents/ETH/Do4'},
             })
 
-            num_cpu = os.cpu_count()
             print(f"Number of CPUs in this system: {num_cpu}")
     
     

@@ -178,10 +178,9 @@ def initialize(sim):
     
     # find neighbouring intersections
     find_neighbouring_intersections(sim)
-
-    if not sim.algorithm == "MP":
-        # define lane capacities
-        define_capacities(sim)
+    
+    # define lane capacities (for all lanes)
+    define_capacities(sim)
         
     if "LDPP-T" in sim.algorithm:
         LDPP_T_initialization(sim)
