@@ -6,6 +6,7 @@ from Simulation.helper.Simulation_class import Simulation
 from Simulation.helper.initialization import initialize
 from Simulation.helper.simulation_wrapper import sim_wrapper
 from Simulation.parameter_loader import load_parameters
+from Simulation.helper.fake_ray_agents import fake_agent
 from Simulation.metrics import Metrics
 
 
