@@ -9,6 +9,7 @@ __pycache__/
 .DS_Store
 
 ### CityFlow ###
+Simulation/CityFlow
 replay_roadnet.json
 replay.txt
 
@@ -18,3 +19,6 @@ replay.txt
 
 ### Miscellaneous ###
 Simulation/code_tests/
+Simulation/comparison/Idle_Time/
+*/Results/*
+Zotero/
