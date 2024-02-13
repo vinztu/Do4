@@ -1,0 +1,13 @@
+### JupyterNotebooks ###
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+### Python ###
+__pycache__/
+
+### macOS ###
+.DS_Store
+
+### CityFlow ###
+replay_roadnet.json
+replay.txt
