@@ -58,8 +58,19 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     # a list with all neghbouring intersections
     neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
+    # determine phase type for this intersection
+    intersection_phase_type = arguments["params"]["intersection_phase"][agent_intersection]
+    
     # Create variables
-    x = m.addVars(neighbouring_intersections, len(arguments["params"]["phases"]), vtype=GRB.BINARY, name="x_i")
+    x = m.addVars(
+        [
+            (intersection, phase)
+            for intersection in neighbouring_intersections
+            for phase in arguments["params"]["all_phases"][arguments["params"]["intersection_phase"][intersection]]
+        ],
+        vtype = GRB.BINARY,
+        name = "x_i"
+    )
     
     # Add constraints such that there is only one phase active in one intersection
     for neighbour in neighbouring_intersections:
@@ -75,7 +86,9 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     
     # add the standard pressure to the objective (MAX problem)
     for neighbour in neighbouring_intersections:
-        for phase in arguments["params"]["phases"]:
+        neighbours_phase_type = arguments["params"]["intersection_phase"][neighbour]
+        
+        for phase in arguments["params"]["all_phases"][neighbours_phase_type]:
             pressure.add(x[neighbour, phase], pressure_per_phase[neighbour][phase])
             
     
@@ -86,11 +99,14 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         movement_lane = arguments["lanes_data"][lane][1]
         downstream_lanes = arguments["lanes_data"][lane][3]
         
+        # determine phase type for this intersection
+        intersection_phase_type = arguments["params"]["intersection_phase"][agent_intersection]
+    
         # find out which phases includes that movement_id
-        corresponding_phase_lane = [phase for phase, movement_list in arguments["params"]["phases"].items() if movement_lane in movement_list]
+        corresponding_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][intersection_phase_type].items() if movement_lane in movement_list]
         
         # do not consider right turns (since all phases "activate" them
-        if len(corresponding_phase_lane) == len(arguments["params"]["phases"]):
+        if len(corresponding_phase_lane) == len(arguments["params"]["all_phases"][intersection_phase_type]):
             continue
             
         for d_lane in downstream_lanes:
@@ -99,19 +115,24 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
             intersection_d_lane = arguments["lanes_data"][d_lane][0]
             movement_d_lane = arguments["lanes_data"][d_lane][1]
             
+            # check if that d_lane is a an outflowing (out of network) lane
+            if intersection_d_lane is None:
+                continue
+            
             # find out which phaes includes that movement_d_lane
-            corresponding_phase_d_lane = [phase for phase, movement_list in arguments["params"]["phases"].items() if movement_d_lane in movement_list]
+            d_intersection_phase_type = arguments["params"]["intersection_phase"][intersection_d_lane]
+            corresponding_phase_d_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][d_intersection_phase_type].items() if movement_d_lane in movement_list]
             
             
-            # check if that d_lane is a an outflowing (out of network) lane or if it is a right turn
+            # check if the lane is a right turn
             # In both cases, we do not consider them
-            if len(corresponding_phase_d_lane) == 0 or len(corresponding_phase_d_lane) == len(arguments["params"]["phases"]):
+            if len(corresponding_phase_d_lane) == len(arguments["params"]["all_phases"][d_intersection_phase_type]):
                 continue
             
             
             # define penalty weight
             if arguments["params"]["lane_weight"] == "constant":
-                gamma = arguments["params"]["constant_weight"][lane]
+                gamma = arguments["params"]["gamma"][d_lane]
                 
             elif arguments["params"]["lane_weight"] == "traffic_dependent":
                 gamma = arguments["lane_vehicle_count"][d_lane]
@@ -159,8 +180,11 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     # write the optimal results in a dictionary
     x_optimized = {}
     for neighbour in neighbouring_intersections:
-        x_optimized[neighbour] = np.array([x_phase.X for x_phase in x.select(neighbour, '*')], dtype=int)
+        # do round as otherwise sometimes this could lead to some issues with dtype=int
+        x_optimized[neighbour] = np.array([round(x_phase.X) for x_phase in x.select(neighbour, '*')], dtype=int)
+        assert sum(x_optimized[neighbour]) == 1, f"sum is {sum(x_optimized[neighbour])}" # safety condition
 
+    
     obj_val = m.ObjVal
     pressure_val = pressure_per_phase[agent_intersection][np.argmax(x_optimized[agent_intersection])]
     

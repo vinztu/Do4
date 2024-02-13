@@ -36,9 +36,12 @@ def traffic_inflow(sim, model, opt_vars, tau, lane, lane_info, tl_update, lane_v
             # movement_id & inter_id for u_lane
             u_lane_int_id = sim.lanes_data[u_lane][0]
             u_lane_movement = sim.lanes_data[u_lane][1] # movement_id
+            
+            # find out which phases includes that movement_id
+            u_intersection_phase_type = sim.params["intersection_phase"][u_lane_int_id]
 
             # return all possible phases that the current lane is part of
-            possible_phases_per_u_lane = [phase for phase, phase_movements in sim.params["phases"].items() if u_lane_movement in phase_movements]
+            possible_phases_per_u_lane = [phase for phase, phase_movements in sim.params["all_phases"][u_intersection_phase_type].items() if u_lane_movement in phase_movements]
 
             # depending on the default phases definition (right turns)
             if not possible_phases_per_u_lane:

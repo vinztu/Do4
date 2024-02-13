@@ -19,6 +19,7 @@ def traffic_model_prediction(sim, model, opt_vars, lane_vehicle_count):
         
         for lane, lane_info in sim.lanes_data.items():
             
+            #### do not need these conditions anymore
             # set initial conditions
             #if tau == 0:
             #    model.addConstr(opt_vars["q"][tau, lane] == lane_vehicle_count[lane], name = f"q_{tau}_{lane}")

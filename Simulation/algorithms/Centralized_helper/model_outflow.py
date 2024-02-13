@@ -60,8 +60,12 @@ def traffic_outflow(sim, model, opt_vars, tau, lane, lane_info, visited_downstre
                 name = f"outflow_{tau}_{lane}"
             )
 
+            
+        # find out which phases includes that movement_id
+        intersection_phase_type = sim.params["intersection_phase"][inter_id]
+            
         # return all possible phases that the current lane is part of
-        possible_phases_per_lane = [phase for phase, phase_movements in sim.params["phases"].items() if movement_id in phase_movements]
+        possible_phases_per_lane = [phase for phase, phase_movements in sim.params["all_phases"][intersection_phase_type].items() if movement_id in phase_movements]
 
         sum_outflow = opt_vars["outflow"][tau, lane] * gp.quicksum(opt_vars["phi"][tl_update, inter_id, phi] for phi in possible_phases_per_lane)
 

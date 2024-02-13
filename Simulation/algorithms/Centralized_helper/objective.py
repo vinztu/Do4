@@ -10,7 +10,11 @@ def set_objective(sim, model, opt_vars):
         tl_update = (tau * sim.params["scaling"]) // sim.params["delta"]
         
         for intersection in sim.intersections_data:
-            for phase in sim.params["phases"]:
+            
+            # determine phase type for this intersection
+            intersection_phase_type = sim.params["intersection_phase"][intersection]
+            
+            for phase in sim.params["all_phases"][intersection_phase_type]:
                 obj += (sim.params["alpha"]**tau) * opt_vars["p_p"][tau, intersection, phase] * opt_vars["phi"][tl_update, intersection, phase]
                 
                 

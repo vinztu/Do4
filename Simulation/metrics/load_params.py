@@ -1,7 +1,7 @@
 def load_specific_params(sim):
     
     # used for the directory name
-    important_info = [sim.params["delta"], sim.params["idle_time"], sim.params["sim_duration"]]
+    important_info = [sim.params["delta"], sim.params["idle_time"], sim.params["sim_duration"], max(sim.params["capacity"].values())]
     
     
     if sim.algorithm == "MP":

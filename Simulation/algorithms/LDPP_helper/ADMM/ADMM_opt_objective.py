@@ -6,7 +6,21 @@ def ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections,
     ##################### ADMM TERMS #####################
     """
     
-    diff = m.addVars(neighbouring_intersections, len(arguments["params"]["phases"]), vtype=GRB.CONTINUOUS, lb = -2, ub = 2, name="diff")
+    # Create variables
+    diff = m.addVars(
+        [
+            (intersection, phase)
+            for intersection in neighbouring_intersections
+            for phase in arguments["params"]["all_phases"][arguments["params"]["intersection_phase"][intersection]]
+        ],
+        vtype = GRB.BINARY,
+        lb = -2,
+        ub = 2,
+        name = "diff"
+    )
+    
+    
+    
     norm = m.addVars(neighbouring_intersections, vtype=GRB.CONTINUOUS, name="norm_ADMM")
     
     for neighbour in neighbouring_intersections:
@@ -15,10 +29,12 @@ def ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections,
         ADMM_obj.add(lambda_[agent_intersection][neighbour].T @ x.select(neighbour, '*'))
         
         
+        neighbour_phase_type = arguments["params"]["intersection_phase"][neighbour]
+        
         # Difference between x and z
         m.addConstrs((
                     diff[neighbour, phase] == x[neighbour, phase] - z[neighbour][phase]
-                    for phase in arguments["params"]["phases"]
+                    for phase in arguments["params"]["all_phases"][neighbour_phase_type]
                     ),
                     name = f"diff_{neighbour}"
         )

@@ -4,7 +4,9 @@ from itertools import takewhile
 from os import listdir
 import ast
 
-def read_and_average_csv(complete_dir):
+
+def read_and_average_csv(complete_dir, selective_algorithm = False):
+    """ with selective_algorithm one can decide to only look at results from a specific algorithm (e.g. MP, Centralized, LDPP-G, ...) """
     
     # create empty dictionaries to store the results
     meta_info = {}
@@ -12,17 +14,24 @@ def read_and_average_csv(complete_dir):
     df_full_entries = {}
 
 
-    for algorithm in listdir(complete_dir):
+    for algorithm in sorted(listdir(complete_dir)):
 
         # filter out other directories
         if algorithm.startswith(".") or algorithm.startswith("Plots"):
             continue
+            
+        if selective_algorithm:
+            alg = algorithm.split("_")[0]
+            if not alg.startswith(selective_algorithm):
+                continue
+            
 
         # directory with all results for that algorithm
         algorithm_results = complete_dir + algorithm
 
         # all simulation files
         simulation_runs = listdir(algorithm_results)
+        
 
         # extract meta information (same for each file in a dir)
         with open(algorithm_results + "/" + simulation_runs[0], "r") as f:
@@ -58,6 +67,6 @@ def read_and_average_csv(complete_dir):
         concat_fe = pd.concat([df for df in df_full_entries_temp])
 
         df_single_entry[algorithm] = pd.DataFrame([concat_se.mean(), concat_se.std()], index = ["mean", "std"])
-        df_full_entries[algorithm] = concat_fe.pivot_table(index = "Time", aggfunc=[np.mean, np.std])
+        df_full_entries[algorithm] = concat_fe.pivot_table(index = "Time", aggfunc=["mean", "std"])
         
     return df_single_entry, df_full_entries, meta_info

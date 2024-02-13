@@ -34,10 +34,12 @@ class Simulation:
         Continue the simulation for n_steps        
     """
     
-    def __init__(self, params, algorithm):
+    def __init__(self, params, algorithm, sys_path, write_phase_to_json):
         self.dir_config_file = params["dir_config_file"]
         self.dir_roadnet_file = self.__load_roadnet_file_name()
         self.thread_num = params["thread_num"]
+        self.sys_path = sys_path
+        self.write_phase_to_json = write_phase_to_json
         self.engine = cityflow.Engine(self.dir_config_file, self.thread_num)
         self.engine.reset()
         
@@ -81,19 +83,18 @@ class Simulation:
         
         if self.algorithm in ray_needed:
             import ray
-            
-            num_cpu = os.cpu_count()
 
             # Initialize ray to enable parallel computing
             ray.init(
-                num_cpus = num_cpu,
                 runtime_env={
-                #'excludes': ['/Users/vinz/Documents/ETH/Do4/Simulation/CityFlow/examples/test/replay.txt'],
-                #"working_dir": "./",
-                "env_vars": {"PYTHONPATH":'/Users/vinz/Documents/ETH/Do4'},
+                "env_vars": {"PYTHONPATH":self.sys_path}, # sys_path defined in main.py
             })
 
-            print(f"Number of CPUs in this system: {num_cpu}")
+            print('''This cluster consists of
+                {} nodes in total
+                {} CPU resources in total
+            '''.format(len(ray.nodes()), ray.cluster_resources()['CPU']))
+
     
     
     def __gurobi_environment(self):

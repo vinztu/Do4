@@ -1,8 +1,9 @@
 from collections import defaultdict
 import numpy as np
 import json
+from Simulation.helper.phase_definitions import phase_definitions
 
-def initialize(sim):
+def initialize(sim, load_capacities):
     """ Initializes the simulation. This will read all information necessary from the roadnet file and store them into the Simulation class object 
     
     ...
@@ -32,7 +33,7 @@ def initialize(sim):
         phases_list = []
         default_time = 10 # default time is set to 10 sec
         
-        for phase_lanes in sim.params["phases"].values():
+        for phase_lanes in sim.params["all_phases"]["normal"].values():
             
             phases_list.append({"time": default_time,
                                 "availableRoadLinks": phase_lanes
@@ -47,6 +48,32 @@ def initialize(sim):
                               )
 
         return phases_list
+    
+    
+    def read_phases(intersection, sim, all_phase_definitions):
+        """
+        Read the phase definitions for an intersection and store it
+        """
+        
+        phase_in_intersection = {}
+        
+        # read the phase from the predefined phase in the json file
+        for index, phase in enumerate(intersection["trafficLight"]["lightphases"]):
+            if phase["availableRoadLinks"] != []:
+                phase_in_intersection[index] = phase["availableRoadLinks"]
+            
+        
+
+        for key, phases in sim.params["all_phases"].items():
+            if phases == phase_in_intersection:
+                return key
+            
+            
+        raise ValueError(f"Missing phase definition for {intersection['id']} with phase {phase_in_intersection} in phase_definition.py")
+                
+        
+
+        
     
     
     def read_lane_names(intersection, sim):
@@ -111,7 +138,7 @@ def initialize(sim):
                    
     
     
-    def read_and_write_roadnet(sim):
+    def read_and_write_roadnet(sim, all_phase_definitions):
         """ Read the roadnet file and retrieve information"""
         
         # stores information about lanes: 
@@ -127,16 +154,23 @@ def initialize(sim):
             
         for intersection in data["intersections"]:
             if (not intersection["virtual"]):
-                # change phase of roadnet file for "intersection"
-                intersection["trafficLight"]["lightphases"] = write_phases(sim)
+                
+                if sim.write_phase_to_json:
+                    # change phase of roadnet file for "intersection"
+                    intersection["trafficLight"]["lightphases"] = write_phases(sim)
+                    
+                # read phase definitions for each intersection
+                sim.params["intersection_phase"][intersection["id"]] = read_phases(intersection, sim, all_phase_definitions)
+                    
                 
                 # read information about intersections and lanes from roadnet file for "intersection"
                 read_lane_names(intersection, sim)
                 
               
         # Write the modified data back to the file
-        with open(sim.dir_roadnet_file, "w") as jsonFile:
-            json.dump(data, jsonFile, indent=4)
+        if sim.write_phase_to_json:
+            with open(sim.dir_roadnet_file, "w") as jsonFile:
+                json.dump(data, jsonFile, indent=4)
             
             
     
@@ -155,10 +189,13 @@ def initialize(sim):
     def define_capacities(sim):
         """ Can be used to load capacities for individual lanes """
         
-        # json.load("capacity_file") (capacities for individual lanes)
+        if load_capacities:
+            network = sim.params["road_network"]
+            sim.params["capacity"] = json.load(open(f"Simulation_Results/{network}/capacities.json")) #(capacities for individual lanes)
 
-        # previously sim.params["capacity"] has been an int defined in parameter_loader.py
-        sim.params["capacity"] = {lane: sim.params["capacity"] for lane in sim.lanes_data}
+        else:
+            # previously sim.params["capacity"] has been an int defined in parameter_loader.py
+            sim.params["capacity"] = {lane: sim.params["capacity"] for lane in sim.lanes_data}
 
     
     def LDPP_T_initialization(sim):
@@ -170,21 +207,41 @@ def initialize(sim):
         """ Used to initialize the weight for each lane in the penalty. Here a different weight for each lane could be chosen. (Default: same for each lane)
         Only active if algorithm = LDPP-GF and lane_weight = "constant"
         """
-        sim.params["constant_weight"] = {lane: sim.params["constant_weight"] for lane in sim.lanes_data}
+        sim.params["gamma"] = {lane: sim.params["gamma"] for lane in sim.lanes_data}
 
+    def Fixed_Time_initialization(sim):
+        sim.params["previous_phase"] = -1
+        
+    
+    def add_neighbours_manhattan(sim):
+        sim.intersections_data["intersection_17_6"]["neighbours"].add("intersection_17_9")
+        sim.intersections_data["intersection_16_9"]["neighbours"].add("intersection_16_6")
+    
+    
+    # read all predefined phase definitions from phase_definitions.py (need to match those of the roadnet json file)
+    all_phase_definitions = phase_definitions()
     
     # read from roadnet file and write back new phases  
-    read_and_write_roadnet(sim)
+    read_and_write_roadnet(sim, all_phase_definitions)
     
     # find neighbouring intersections
     find_neighbouring_intersections(sim)
     
+    # bad solution used for the Manhattan network!! (Add neighbours manually for intersection 17_6 and 16_9, since there is no incoming lane from neighbour 17_9 and 16_6 respectively)
+    ######## and remove neighbours manually for intersection 17_9 and 16_6, since there is not outgoing lane to neighbour 17_6 and 16_9 respecively
+    if sim.params["road_network"] == "Manhattan":
+        add_neighbours_manhattan(sim)
+    
     # define lane capacities (for all lanes)
     define_capacities(sim)
+    
         
     if "LDPP-T" in sim.algorithm:
         LDPP_T_initialization(sim)
         
     if "LDPP-GF" in sim.algorithm:
         LDPP_GF_initialization(sim)
+        
+    if "Fixed-Time" in sim.algorithm:
+        Fixed_Time_initialization(sim)
         

@@ -6,7 +6,11 @@ def compute_pressure_per_phase(sim, model, opt_vars):
     
     for tau in range(sim.params["prediction_horizon"] + 1):
         for intersection in sim.intersections_data:
-            for phase, movement_list in sim.params["phases"].items():
+            
+            # determine phase type for this intersection
+            intersection_phase_type = sim.params["intersection_phase"][intersection]
+            
+            for phase, movement_list in sim.params["all_phases"][intersection_phase_type].items():
                 
                 model.addConstr((
                     opt_vars["p_p"][tau, intersection, phase] == gp.quicksum(opt_vars["p_m"][tau, intersection, movement] for movement in movement_list)

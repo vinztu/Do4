@@ -13,8 +13,19 @@ def create_model(sim):
     model = gp.Model(env = sim.gurobi_env)
     #model.setParam("NonConvex", 2)
     
+    
     # variables for phi
-    phi = model.addVars(sim.params["num_tl_updates"], sim.intersections_data.keys(), sim.params["phases"], vtype = GRB.BINARY, name = "phi")
+    phi = model.addVars(
+        [
+            (num_tl_update, intersection, phase)
+            for num_tl_update in range(sim.params["num_tl_updates"])
+            for intersection in sim.intersections_data.keys()
+            for phase in sim.params["all_phases"][sim.params["intersection_phase"][intersection]]
+        ],
+        vtype = GRB.BINARY,
+        name = "phi"
+    )
+    
     
     # variables for q (the variable for time t=0 is not needed (constant))
     q = model.addVars(range(1,sim.params["prediction_horizon"] + 1), sim.lanes_data.keys(), vtype = GRB.CONTINUOUS, lb = 0, ub = max_capacity, name = "q")
@@ -23,7 +34,18 @@ def create_model(sim):
     p_m = model.addVars(sim.params["prediction_horizon"] + 1, sim.intersections_data.keys(), sim.params["movements"], lb = -max_capacity, ub = max_capacity, vtype = GRB.CONTINUOUS, name = "p_m")
     
     # pressure per phase
-    p_p = model.addVars(sim.params["prediction_horizon"] + 1, sim.intersections_data.keys(), sim.params["phases"].keys(), lb = -5*max_capacity, ub = 5*max_capacity, vtype = GRB.CONTINUOUS, name = "p_s")
+    p_p = model.addVars(
+        [
+            (prediction_horizon, intersection, phase)
+            for prediction_horizon in range(sim.params["prediction_horizon"] + 1)
+            for intersection in sim.intersections_data.keys()
+            for phase in sim.params["all_phases"][sim.params["intersection_phase"][intersection]]
+        ],
+        lb = -5*max_capacity,
+        ub = 5*max_capacity,
+        vtype = GRB.CONTINUOUS,
+        name = "p_p"
+    )
     
     # inflow variables (min between q and saturation flow)
     min_flow = model.addVars(sim.params["prediction_horizon"] + 1, sim.lanes_data.keys(), lb = 0, ub = sim.params["saturation_flow"], vtype = GRB.CONTINUOUS, name = "min_flow")

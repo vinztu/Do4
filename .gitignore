@@ -11,3 +11,10 @@ __pycache__/
 ### CityFlow ###
 replay_roadnet.json
 replay.txt
+
+### Simulation ###
+*.ilp
+*.lp
+
+### Miscellaneous ###
+Simulation/code_tests/

@@ -1,4 +1,6 @@
-def load_parameters_common(road_network):
+from Simulation.helper.phase_definitions import phase_definitions
+
+def load_parameters_common(road_network, ext_dict):
 
     # for cityflow engine
     thread_num = 1
@@ -10,18 +12,13 @@ def load_parameters_common(road_network):
     dir_config_file = f'Simulation_Results/{road_network}/config.json'
 
     # number of simulation rounds
-    number_of_rounds = 2
+    number_of_rounds = 1
 
     # Predefined phases
-    phases = {0: [0, 7, 2, 3, 6, 10],
-              1: [1, 8, 2, 3, 6, 10],
-              2: [4, 11, 2, 3, 6, 10],
-              3: [5, 9, 2, 3, 6, 10],
-              4: [0, 1, 2, 3, 6, 10],
-              5: [7, 8, 2, 3, 6, 10],
-              6: [9, 11, 2, 3, 6, 10],
-              7: [4, 5, 2, 3, 6, 10]
-             }
+    all_phases = phase_definitions()
+    
+    # store the specific phase for each intersection
+    intersection_phase = {}
     
     # define the number of movements
     movements = 12
@@ -33,10 +30,10 @@ def load_parameters_common(road_network):
     idle_time = 5
 
     # simulation duration
-    sim_duration = 1000
+    sim_duration = 1600
 
     # saturation flow rate
-    saturation_flow = 2
+    saturation_flow = 0.7
 
     # capacity of a lane (can load a json file in initialization.py with individual capacities)
     capacity = 30
@@ -47,7 +44,8 @@ def load_parameters_common(road_network):
         "dir_config_file": dir_config_file,
         "road_network": road_network,
         "number_of_rounds": number_of_rounds,
-        "phases": phases,
+        "all_phases": all_phases,
+        "intersection_phase": intersection_phase,
         "movements": movements,
         "delta": delta,
         "idle_time": idle_time,
@@ -58,6 +56,17 @@ def load_parameters_common(road_network):
     
     return common_params
 
+
+def load_parameters_Fixed_Time():
+    # Additional parameters specific for Fixed Time Control
+    
+    phase_sequence = [0, 2, 1, 3]
+    
+    fixed_time_params = {
+        "phase_sequence": phase_sequence
+    }
+    
+    return {fixed_time_params}
 
 def load_parameters_MP():
     # Additional parameters specific to MP algorithm
@@ -84,7 +93,7 @@ def load_parameters_Centralized(common_params):
     # Additional parameters specific to Centralized algorithm
     
     # reduces the amount of variables by /scaling (SCALING <= DELTA)
-    scaling = 10
+    scaling = 2
     
     # number of planning steps (actual horizon is * scaling)
     prediction_horizon = 2
@@ -93,7 +102,10 @@ def load_parameters_Centralized(common_params):
     num_tl_updates = ((prediction_horizon * scaling) // common_params["delta"]) + 1
     
     # number of vehicles that enter from the outside per time step
-    exogenous_inflow = 0.1 * scaling
+    exogenous_inflow = common_params["saturation_flow"] * scaling
+    
+    # saturation flow rate
+    saturation_flow = common_params["saturation_flow"] * scaling
     
     # discount parameter
     alpha = 0.5                                                                               
@@ -104,43 +116,47 @@ def load_parameters_Centralized(common_params):
         "num_tl_updates": num_tl_updates,
         "scaling": scaling,
         "exogenous_inflow": exogenous_inflow,
+        "saturation_flow": saturation_flow,
         "alpha": alpha
     }
     
     return centralized_params
     
 
-def load_parameters_LDPP(algorithm):
+def load_parameters_LDPP(algorithm, common_params):
     # Additional parameters specific to Centralized algorithm
     
     # maximal number of iterations for the ADMM algorithm
-    max_it = 20
+    max_it = 30
     
     # lagrangian parameter rho
-    rho = 0
+    rho = 3
     
     # determine domain for z ("binary" or "continuous") --> affects z-update
     z_domain = "binary"
     
+    # saturation flow (not the flow, but the maximal number of cars that flow during 1 delta cycle)
+    saturation_flow = common_params["saturation_flow"] * common_params["delta"]
     
     LDPP_params = {
         "max_it": max_it,
         "rho": rho,
         "z_domain": z_domain,
+        "saturation_flow": saturation_flow,
     }
     
     if "LDPP-T" in algorithm:
         L = 10
-        V1 = 0
-        V2 = 0
-        V3 = 0
+        V1 = 1
+        V2 = 1
+        V3 = 5
         temp = {"L": L, "V1": V1, "V2": V2, "V3": V3}
         
     elif "LDPP-GF" in algorithm:
         lane_weight = "constant" # or traffic_dependent
-        constant_weight = 1 # if lane_weight == "constant", choose the weight (or could be chosen to be different per lane in initialization.py)
-        V = 0
-        temp = {"lane_weight": lane_weight, "constant_weight": constant_weight, "V": V}
+        gamma = 1 # if lane_weight == "constant", choose the weight (or could be chosen to be different per lane in initialization.py)
+        V = 10
+        temp = {"lane_weight": lane_weight, "gamma": gamma, "V": V}
         
     else:
         print(f"WRONG ALGORITHM NAME: {algorithm}! Choose either LDPP-T or LDPP-GF.")
@@ -153,9 +169,12 @@ def load_parameters_LDPP(algorithm):
     
 
 def load_parameters(algorithm, road_network, ext_dict = None):
-    common_params = load_parameters_common(road_network)
+    common_params = load_parameters_common(road_network, ext_dict)
     
-    if algorithm == "MP":
+    if algorithm == "Fixed-Time":
+        fixed_time_params = load_parameters_Fixed_Time
+        common_params.update(fixed_time_params)
+    elif algorithm == "MP":
         mp_params = load_parameters_MP()
         common_params.update(mp_params)
     elif algorithm == "CA_MP":
@@ -165,7 +184,7 @@ def load_parameters(algorithm, road_network, ext_dict = None):
         centralized_params = load_parameters_Centralized(common_params)
         common_params.update(centralized_params)
     elif "LDPP" in algorithm:
-        centralized_params = load_parameters_LDPP(algorithm)
+        centralized_params = load_parameters_LDPP(algorithm, common_params)
         common_params.update(centralized_params)
     else:
         raise ValueError("Unsupported algorithm: {}".format(algorithm))

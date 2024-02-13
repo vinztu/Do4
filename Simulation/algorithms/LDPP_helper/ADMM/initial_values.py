@@ -40,11 +40,13 @@ def create_initial_values(sim):
         
         for neighbour in neighbouring_intersections:
             
+            neighbour_phase_type = sim.params["intersection_phase"][neighbour]
+            
             # use floats here in case we use continuous z, since we need to add subtract x - z later (so both are floats)
-            x_i = np.zeros(len(sim.params["phases"]) , dtype=float)
+            x_i = np.zeros(len(sim.params["all_phases"][neighbour_phase_type]) , dtype=float)
 
             # set 1 random entry to 1
-            idx = np.random.randint(len(sim.params["phases"]))
+            idx = np.random.randint(len(sim.params["all_phases"][neighbour_phase_type]))
             x_i[idx] = 1
 
             temp[neighbour] = x_i.copy()
@@ -52,7 +54,7 @@ def create_initial_values(sim):
         # create a dict within a dict to match the format used later
         x[intersection] =  temp.copy()
         lambda_[intersection] = temp.copy()
-        z[intersection] = x_i.copy()
+        z[intersection] = x[intersection][intersection].copy()
         
     return x, z, lambda_
 

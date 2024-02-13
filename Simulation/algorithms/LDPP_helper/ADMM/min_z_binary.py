@@ -20,8 +20,11 @@ def min_z(arguments, agent_intersection, x, lambda_):
     # a list with all neghbouring intersections
     neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
+    # determine phase type for this intersection
+    intersection_phase_type = arguments["params"]["intersection_phase"][agent_intersection]
+    
     # Create variables
-    z = m.addVars(len(arguments["params"]["phases"]), vtype=GRB.BINARY, name="z")
+    z = m.addVars(len(arguments["params"]["all_phases"][intersection_phase_type]), vtype=GRB.BINARY, name="z")
     
     # add constraint such that there is only 1 active phase per intersection
     m.addConstr(z.sum() == 1, name=f"z_constr")
@@ -36,7 +39,7 @@ def min_z(arguments, agent_intersection, x, lambda_):
         
         # add the first term to the objective (lambda * z)
         ADMM_obj += lambda_[neighbour][agent_intersection] @ z.select("*")
-
+             
         # add the second term to the objective (rho * x * z)
         ADMM_obj += arguments["params"]["rho"] * x[neighbour][agent_intersection] @ z.select("*")
         

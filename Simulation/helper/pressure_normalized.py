@@ -41,8 +41,10 @@ def compute_normalized_pressure(arguments, intersection):
     # Calculate pressure per phase
     ##############################################################################
     pressure_per_phase = []
+    
+    phase_type = arguments["params"]["intersection_phase"][intersection]
 
-    for index, phase in enumerate(arguments["params"]["phases"].values()):
+    for index, phase in enumerate(arguments["params"]["all_phases"][phase_type].values()):
 
         pressure = sum( list( map(pressure_per_movement.get, phase)))
 

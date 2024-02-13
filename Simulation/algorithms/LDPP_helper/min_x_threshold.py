@@ -62,7 +62,16 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     big_M = max(arguments["params"]["capacity"].values()) + 30
     
     # Create variables
-    x = m.addVars(neighbouring_intersections, len(arguments["params"]["phases"]), vtype=GRB.BINARY, name="x_i")
+    x = m.addVars(
+        [
+            (intersection, phase)
+            for intersection in neighbouring_intersections
+            for phase in arguments["params"]["all_phases"][arguments["params"]["intersection_phase"][intersection]]
+        ],
+        vtype = GRB.BINARY,
+        name = "x_i"
+    )
+    
     h1 = m.addVars(arguments["intersections_data"][agent_intersection]["inflow"], vtype=GRB.BINARY, name="h1")
 
     h2 = m.addVars(
@@ -95,15 +104,17 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     # add the standard pressure to the objective (MAX problem)
     for neighbour in neighbouring_intersections:
         
+        neighbours_phase_type = arguments["params"]["intersection_phase"][neighbour]
+        
         # count past decisions
         unique, counts = np.unique(arguments["phase_history"][neighbour], return_counts=True)
         count_decisions = dict(zip(unique, counts))
             
-        for phase in arguments["params"]["phases"]:
+        for phase in arguments["params"]["all_phases"][neighbours_phase_type]:
             pressure.add(x[neighbour, phase], pressure_per_phase[neighbour][phase])
             
             # 3rd penalty term (V3 * (# of lanes in phase) * (# of previous decisions))
-            pen.add(x[neighbour, phase], arguments["params"]["V3"] * len(arguments["params"]["phases"]) * count_decisions.get(phase, 0))
+            pen.add(x[neighbour, phase], arguments["params"]["V3"] * len(arguments["params"]["all_phases"][neighbours_phase_type]) * count_decisions.get(phase, 0))
             
             
     # add penalty function to the objective
@@ -114,8 +125,11 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         # movement_id of lane
         movement_lane = arguments["lanes_data"][lane][1]
         
+        # determine phase type for this intersection
+        intersection_phase_type = arguments["params"]["intersection_phase"][agent_intersection]
+        
         # find out which phases includes that movement_id
-        corresponding_phase_lane = [phase for phase, movement_list in arguments["params"]["phases"].items() if movement_lane in movement_list]
+        corresponding_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][intersection_phase_type].items() if movement_lane in movement_list]
         
         # determine amount of cars that can leave the lane
         outflow_lane = min(arguments["lane_vehicle_count"][lane], arguments["params"]["saturation_flow"])
@@ -144,7 +158,8 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
                 intersection_u_lane = arguments["lanes_data"][lane][0]
                 
                 # find out which phases includes that movement_id
-                corresponding_u_phase_lane = [phase for phase, movement_list in arguments["params"]["phases"].items() if movement_u_lane in movement_list]
+                u_intersection_phase_type = arguments["params"]["intersection_phase"][intersection_u_lane]
+                corresponding_u_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][u_intersection_phase_type].items() if movement_u_lane in movement_list]
                 
                 # determine amount of cars that can leave the u_lane
                 inflow_lane = min(arguments["lane_vehicle_count"][u_lane], arguments["params"]["saturation_flow"])
@@ -167,28 +182,34 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         # define empty dict
         outflow_d_gurobi = {d_lane: gp.LinExpr(0) for d_lane in downstream_lanes}
         
+        # if the d_lane has no downstream lanes, then d_lane is an exit lane and has a constant outflow
         for d_lane in downstream_lanes:
-
-            # movement_id of the downstream lane
-            movement_d_lane = arguments["lanes_data"][d_lane][1]
-            intersection_d_lane = arguments["lanes_data"][d_lane][0]
             
-            # determine amount of cars that can leave d_lane
-            outflow_d_lane = min(arguments["lane_vehicle_count"][d_lane], arguments["params"]["saturation_flow"])
+            if len(arguments["lanes_data"][d_lane][3]) != 0:
 
-            # if the downstream lane is an exit lane (no intersection_d_lane), then the outflow is constant
-            # and does not depend on a traffic light
-            if not intersection_d_lane:
-                outflow_d_gurobi[d_lane] = outflow_d_lane
-                continue
+                # movement_id of the downstream lane
+                movement_d_lane = arguments["lanes_data"][d_lane][1]
+                intersection_d_lane = arguments["lanes_data"][d_lane][0]
 
-            # find out which phases includes that of movement_id
-            corresponding_d_phase_lane = [phase for phase, movement_list in arguments["params"]["phases"].items() if movement_d_lane in movement_list]
+                # determine amount of cars that can leave d_lane
+                outflow_d_lane = min(arguments["lane_vehicle_count"][d_lane], arguments["params"]["saturation_flow"])
 
-            # add the outflow from d_lane to the objective
-            for phase in corresponding_d_phase_lane:
-                outflow_d_gurobi[d_lane].add(x[intersection_d_lane, phase], outflow_d_lane)
+                # if the downstream lane is an exit lane (no intersection_d_lane), then the outflow is constant
+                # and does not depend on a traffic light
+                if not intersection_d_lane:
+                    outflow_d_gurobi[d_lane] = outflow_d_lane
+                    continue
+
+                # find out which phases includes that of movement_id
+                d_intersection_phase_type = arguments["params"]["intersection_phase"][intersection_d_lane]
+                corresponding_d_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][d_intersection_phase_type].items() if movement_d_lane in movement_list]
+
+                # add the outflow from d_lane to the objective
+                for phase in corresponding_d_phase_lane:
+                    outflow_d_gurobi[d_lane].add(x[intersection_d_lane, phase], outflow_d_lane)
             
+            else:
+                outflow_d_gurobi[d_lane].add(arguments["params"]["saturation_flow"]) 
         
         ##################### H1 PENALTY #####################
         neighboring_lanes = [l for l in arguments["lanes_data"] if l[:-2] in lane]
@@ -207,16 +228,15 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         
         
         ##################### H2 PENALTY #####################
-        if downstream_lanes:
-            for d_lane in downstream_lanes:
-                # Big M constraint 1
-                m.addConstr(arguments["lane_vehicle_count"][d_lane] - outflow_d_gurobi[d_lane] + outflow_gurobi >= arguments["params"]["capacity"][d_lane] - big_M * (1 - h2[lane, d_lane]), name=f"h2_1_{lane}_{d_lane}")
-                
-                # Big M constraint 2
-                m.addConstr(arguments["lane_vehicle_count"][d_lane] - outflow_d_gurobi[d_lane] + outflow_gurobi  <= arguments["params"]["capacity"][d_lane] + big_M * h2[lane, d_lane], name=f"h2_2_{lane}_{d_lane}")
-                
-                # weight the value by the lane's weight
-                pen.add(h2[lane, d_lane], arguments["params"]["V2"] * arguments["params"]["constant_weight"][d_lane])
+        for d_lane in downstream_lanes:
+            # Big M constraint 1
+            m.addConstr(arguments["lane_vehicle_count"][d_lane] - outflow_d_gurobi[d_lane] + outflow_gurobi >= arguments["params"]["capacity"][d_lane] - big_M * (1 - h2[lane, d_lane]), name=f"h2_1_{lane}_{d_lane}")
+
+            # Big M constraint 2
+            m.addConstr(arguments["lane_vehicle_count"][d_lane] - outflow_d_gurobi[d_lane] + outflow_gurobi  <= arguments["params"]["capacity"][d_lane] + big_M * h2[lane, d_lane], name=f"h2_2_{lane}_{d_lane}")
+
+            # weight the value by the lane's weight
+            pen.add(h2[lane, d_lane], arguments["params"]["V2"] * arguments["params"]["constant_weight"][d_lane])
         
 
     
@@ -256,8 +276,9 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     # write the optimal results in a dictionary
     x_optimized = {}
     for neighbour in neighbouring_intersections:
-        x_optimized[neighbour] = np.array([x_phase.X for x_phase in x.select(neighbour, '*')], dtype=int)
-        assert sum(x_optimized[neighbour]) == 1 # asdkfjalskdjflakdsjfaöklsdjföajsdfasdlfjlaskdjfaskd
+        # do round as otherwise sometimes this could lead to some issues with dtype=int
+        x_optimized[neighbour] = np.array([round(x_phase.X) for x_phase in x.select(neighbour, '*')], dtype=int)
+        assert sum(x_optimized[neighbour]) == 1, f"sum is {sum(x_optimized[neighbour])}" # safety condition
 
     obj_val = m.ObjVal
     pressure_val = pressure_per_phase[agent_intersection][np.argmax(x_optimized[agent_intersection])]

@@ -29,7 +29,6 @@ def read_roadmap(Road_map_Json):
     Mapping_IN_to_OUT = {0:2, 1:3, 2:0, 3:1}
     
     # Iterating through the json
-    # list
     for intersection in data["intersections"]:
         if intersection["virtual"] == True:
             virtual_intersections.add(intersection["id"])

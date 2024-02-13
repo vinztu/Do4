@@ -24,8 +24,11 @@ def check_agreement(sim, arguments_id, optimal_phases, DET, consensus, count_opt
 @ray.remote
 def agent_check_agreement(arguments, agent_intersection, optimal_phases, DET):
     
+    # determine phase type for this intersection
+    intersection_phase_type = arguments["params"]["intersection_phase"][agent_intersection]
+    
     # initialize a counter that counts which phase will be chosen most based on neighbours
-    count_optima = np.zeros(len(arguments["params"]["phases"]))
+    count_optima = np.zeros(len(arguments["params"]["all_phases"][intersection_phase_type]))
     
     # initialize consensus as true
     consensus = True

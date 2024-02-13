@@ -31,5 +31,6 @@ def idle_time_activate_tl(sim):
     
     for intersection in sim.intersections_data:
         
-        sim.engine.set_tl_phase(intersection, len(sim.params["phases"]))
+        phase_type = sim.params["intersection_phase"][intersection]
+        sim.engine.set_tl_phase(intersection, len(sim.params["all_phases"][phase_type]))
     

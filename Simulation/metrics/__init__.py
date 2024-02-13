@@ -134,7 +134,6 @@ class Metrics:
         
         # important meta information
         meta_information = {
-            "phases": len(sim.params["phases"]),
             "delta": sim.params["delta"],
             "idle_time": sim.params["idle_time"],
             "sim_duration": sim.params["sim_duration"],
