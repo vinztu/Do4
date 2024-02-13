@@ -6,7 +6,7 @@ This repository contains a simulation study on traffic signal control using the 
 
 The simulation uses the famous Maximum Pressure algorithm and the Lyapunov Drift Plus Penalty theory to evaluate the performance of different traffic signal control algorithms. The simulation results are compared using sensitivity analysis to analyze the impact of different parameters on the performance of the algorithms.
 
-The code uses CityFlow as a simulation environment (https://cityflow-project.github.io/)
+The code uses CityFlow as a simulation environment (https://cityflow-project.github.io/).
 
 ## Folder Structure
 
