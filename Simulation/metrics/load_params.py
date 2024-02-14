@@ -4,6 +4,9 @@ def load_specific_params(sim):
     important_info = [sim.params["delta"], sim.params["idle_time"], sim.params["sim_duration"], max(sim.params["capacity"].values())]
     
     
+    if sim.algorithm == "Fixed-Time":
+        specific_params = {}
+        
     if sim.algorithm == "MP":
         specific_params = {}
     

@@ -20,5 +20,6 @@ replay.txt
 ### Miscellaneous ###
 Simulation/code_tests/
 Simulation/comparison/Idle_Time/
+*.csv
 */Results/*
 Zotero/

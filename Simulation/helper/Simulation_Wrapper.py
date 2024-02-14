@@ -3,6 +3,7 @@ from Simulation.helper.simulation_step import sim_step
 from Simulation.helper.tl_activation import activate_tl
 
 # import all algorithms
+from Simulation.algorithms.Fixed_Time import Fixed_Time
 from Simulation.algorithms.Max_Pressure import Max_Pressure
 from Simulation.algorithms.Capacity_Aware_MP import Capacity_Aware_MP
 from Simulation.algorithms.Centralized import Centralized_MP
@@ -17,6 +18,7 @@ def sim_wrapper(sim, metrics_recorder):
     
     # all available algorithms
     algorithms = {
+        "Fixed-Time": Fixed_Time,
         "MP": Max_Pressure,
         "CA_MP": Capacity_Aware_MP,
         "Centralized": Centralized_MP,

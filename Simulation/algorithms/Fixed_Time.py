@@ -25,13 +25,6 @@ def Fixed_Time(sim):
         "params": sim.params
     })
     
-    # find next active phase
-    index_prev_phase = sim.phase_sequence.index(sim.params["previous_phase"])
-    next_phase = sim.phase_sequence[(index_prev_phase + 1) % len(sim.phase_sequence)]
-    
-    # update the previous phase
-    sim.params["previous_phase"] = next_phase
-
         
     # Start a new process for each intersection
     for intersection in sim.intersections_data:
@@ -44,11 +37,27 @@ def Fixed_Time(sim):
     highest_phases = {}
     # update values for performance metrics
     # only take those pressures into account for which the phase got selected
-    for intersection, pressure, opt_phase in futures_completed:
-        sim.perform["current_pressure"][intersection] = pressure
-        sim.perform["current_objective"][intersection] = pressure
+    for intersection, pressure_per_phase in futures_completed:
         
+        # find next active phase
+        phase_type = sim.params["intersection_phase"][intersection]
+        
+        if sim.params["previous_phase"][intersection] != -1:
+            index_prev_phase = sim.params[phase_type].index(sim.params["previous_phase"][intersection])
+        
+            next_phase = sim.params[phase_type][(index_prev_phase + 1) % len(sim.params[phase_type])]
+            
+        else:
+            next_phase = sim.params[phase_type][0]
+
+        # update the previous phase
+        sim.params["previous_phase"][intersection] = next_phase
+    
         highest_phases[intersection] = next_phase
+        
+        
+        sim.perform["current_pressure"][intersection] = pressure_per_phase[next_phase]
+        sim.perform["current_objective"][intersection] = pressure_per_phase[next_phase]
     
     return highest_phases
 
@@ -59,5 +68,5 @@ def agent_computation(arguments, intersection):
     # compute all pressures per intersection
     _, pressure_per_phase = compute_pressure(arguments, intersection)
 
-    return intersection, pressure
+    return intersection, pressure_per_phase
     

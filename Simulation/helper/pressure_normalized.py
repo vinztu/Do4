@@ -31,10 +31,13 @@ def compute_normalized_pressure(arguments, intersection):
     for lane in arguments["intersections_data"][intersection]["inflow"]:
 
         movement_id = arguments["lanes_data"][lane][1]
+        
+        # take any downstream lane (only road matters and not specific lane)
+        d_lane = arguments["lanes_data"][lane][3][0]
 
         # here we assume a uniform turn ratio
         # !!! Different pressure definition max(0, MP_pressure)
-        pressure_per_movement[movement_id] = arguments["params"]["saturation_flow"] * max(0, normalize_lane(lane, arguments) - normalize_lane(lane, arguments))
+        pressure_per_movement[movement_id] = arguments["params"]["saturation_flow"] * max(0, normalize_lane(lane, arguments) - normalize_lane(d_lane, arguments))
 
                     
     ##############################################################################
@@ -61,7 +64,7 @@ def normalize_lane(lane, arguments):
     # !!! Difference to MP: Consider all vehicles on a ROAD (not lane) to calculate the pressure
     num_vehicles = sum(arguments["lane_vehicle_count"][l] for l in arguments["lanes_data"] if l[:-2] in lane)
     
-    nominator = (num_vehicles/arguments["params"]["c_inf"]) + (2 - (arguments["params"]["capacity"][lane]/arguments["params"]["c_inf"])) * ((num_vehicles/arguments["params"]["capacity"][lane]) ** arguments["params"]["m"])
+    nominator = (num_vehicles/arguments["params"]["c_inf"]) + ((2 - (arguments["params"]["capacity"][lane]/arguments["params"]["c_inf"])) * ((num_vehicles/arguments["params"]["capacity"][lane]) ** arguments["params"]["m"]))
     
     denominator = 1 + ((num_vehicles/arguments["params"]["capacity"][lane]) ** (arguments["params"]["m"]-1))
     

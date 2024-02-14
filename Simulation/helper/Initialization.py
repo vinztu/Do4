@@ -210,9 +210,8 @@ def initialize(sim, load_capacities):
         sim.params["gamma"] = {lane: sim.params["gamma"] for lane in sim.lanes_data}
 
     def Fixed_Time_initialization(sim):
-        sim.params["previous_phase"] = -1
+        sim.params["previous_phase"] = {intersection: -1 for intersection in sim.intersections_data}
         
-    
     def add_neighbours_manhattan(sim):
         sim.intersections_data["intersection_17_6"]["neighbours"].add("intersection_17_9")
         sim.intersections_data["intersection_16_9"]["neighbours"].add("intersection_16_6")

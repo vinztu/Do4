@@ -30,13 +30,13 @@ def load_parameters_common(road_network, ext_dict):
     idle_time = 5
 
     # simulation duration
-    sim_duration = 1600
+    sim_duration = 4000
 
     # saturation flow rate
     saturation_flow = 0.7
 
     # capacity of a lane (can load a json file in initialization.py with individual capacities)
-    capacity = 30
+    capacity = 15
     
 
     common_params = {
@@ -60,13 +60,28 @@ def load_parameters_common(road_network, ext_dict):
 def load_parameters_Fixed_Time():
     # Additional parameters specific for Fixed Time Control
     
-    phase_sequence = [0, 2, 1, 3]
+    normal_phase_sequence = [0, 2, 1, 3]
+    top_intersection = [0, 1, 2]
+    bottom_intersection = [0, 1, 2]
+    left_intersection = [0, 1, 2]
+    intersection_16_9_phase_sequence = [0, 3, 2, 4, 1]
+    intersection_17_9_phase_sequence = [0, 3, 2, 1]
+    intersection_16_6_phase_sequence = [0, 3, 2, 1]
+    intersection_17_6_phase_sequence = [0, 3, 2, 4, 1]
+    
     
     fixed_time_params = {
-        "phase_sequence": phase_sequence
+        "normal_intersection": normal_phase_sequence,
+        "top_intersection": top_intersection,
+        "bottom_intersection": bottom_intersection,
+        "left_intersection": left_intersection,
+        "intersection_16_9": intersection_16_9_phase_sequence,
+        "intersection_17_9": intersection_17_9_phase_sequence,
+        "intersection_16_6": intersection_16_6_phase_sequence,
+        "intersection_17_6": intersection_17_6_phase_sequence
     }
     
-    return {fixed_time_params}
+    return fixed_time_params
 
 def load_parameters_MP():
     # Additional parameters specific to MP algorithm
@@ -172,7 +187,7 @@ def load_parameters(algorithm, road_network, ext_dict = None):
     common_params = load_parameters_common(road_network, ext_dict)
     
     if algorithm == "Fixed-Time":
-        fixed_time_params = load_parameters_Fixed_Time
+        fixed_time_params = load_parameters_Fixed_Time()
         common_params.update(fixed_time_params)
     elif algorithm == "MP":
         mp_params = load_parameters_MP()
