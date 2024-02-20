@@ -77,6 +77,12 @@ write_phase_to_json = True
 # use custom .json file with capacities
 load_capacities = False
 
+# write phase definitions in roadnet.json file if True
+write_phase_to_json = True
+
+# load "custom" capacities in separate json file if True (else define in parameter_loader.py)
+load_capacities = False
+
 # Generate all possible combinations of parameter values
 parameter_combinations = product(delta_and_idle, capacity, V1, V2, V3, L, rho)
 
@@ -94,4 +100,4 @@ for i, combination in enumerate(parameter_combinations):
     }
     
     print(ext_dict)
-    main(algorithm, road_network, ext_dict)
+    main(algorithm, road_network, write_phase_to_json, load_capacities, ext_dict)

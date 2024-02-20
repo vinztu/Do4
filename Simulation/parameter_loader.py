@@ -145,7 +145,7 @@ def load_parameters_LDPP(algorithm, common_params):
     max_it = 30
     
     # lagrangian parameter rho
-    rho = 0.5
+    rho = 8
     
     # determine domain for z ("binary" or "continuous") --> affects z-update
     z_domain = "binary"
