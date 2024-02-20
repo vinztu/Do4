@@ -42,19 +42,14 @@ def Fixed_Time(sim):
         # find next active phase
         phase_type = sim.params["intersection_phase"][intersection]
         
-        if sim.params["previous_phase"][intersection] != -1:
-            index_prev_phase = sim.params[phase_type].index(sim.params["previous_phase"][intersection])
-        
-            next_phase = sim.params[phase_type][(index_prev_phase + 1) % len(sim.params[phase_type])]
-            
-        else:
-            next_phase = sim.params[phase_type][0]
+        index_prev_phase = sim.params["fixed_time_params"][phase_type].index(sim.params["previous_phase"][intersection])
 
+        next_phase = sim.params["fixed_time_params"][phase_type][(index_prev_phase + 1) % len(sim.params["fixed_time_params"][phase_type])]
+            
         # update the previous phase
         sim.params["previous_phase"][intersection] = next_phase
     
         highest_phases[intersection] = next_phase
-        
         
         sim.perform["current_pressure"][intersection] = pressure_per_phase[next_phase]
         sim.perform["current_objective"][intersection] = pressure_per_phase[next_phase]

@@ -1,6 +1,7 @@
 # add the root to sys.path
 import sys
-sys.path.append('/Users/vinz/Documents/ETH/Do4')
+sys_path = '/Users/vinz/Documents/ETH/Do4'
+sys.path.append(sys_path)
 
 from Simulation.helper.Simulation_class import Simulation
 from Simulation.helper.initialization import initialize

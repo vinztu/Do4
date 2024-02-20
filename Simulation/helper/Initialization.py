@@ -33,7 +33,7 @@ def initialize(sim, load_capacities):
         phases_list = []
         default_time = 10 # default time is set to 10 sec
         
-        for phase_lanes in sim.params["all_phases"]["normal"].values():
+        for phase_lanes in sim.params["all_phases"]["normal_intersection"].values():
             
             phases_list.append({"time": default_time,
                                 "availableRoadLinks": phase_lanes
@@ -71,9 +71,6 @@ def initialize(sim, load_capacities):
             
         raise ValueError(f"Missing phase definition for {intersection['id']} with phase {phase_in_intersection} in phase_definition.py")
                 
-        
-
-        
     
     
     def read_lane_names(intersection, sim):
@@ -210,7 +207,13 @@ def initialize(sim, load_capacities):
         sim.params["gamma"] = {lane: sim.params["gamma"] for lane in sim.lanes_data}
 
     def Fixed_Time_initialization(sim):
-        sim.params["previous_phase"] = {intersection: -1 for intersection in sim.intersections_data}
+        
+        sim.params["previous_phase"] = {}
+        for intersection in sim.intersections_data:
+            phase_type = sim.params["intersection_phase"][intersection]
+            
+            sim.params["previous_phase"][intersection] = sim.params["fixed_time_params"][phase_type][0]
+            
         
     def add_neighbours_manhattan(sim):
         sim.intersections_data["intersection_17_6"]["neighbours"].add("intersection_17_9")
@@ -226,7 +229,7 @@ def initialize(sim, load_capacities):
     # find neighbouring intersections
     find_neighbouring_intersections(sim)
     
-    # bad solution used for the Manhattan network!! (Add neighbours manually for intersection 17_6 and 16_9, since there is no incoming lane from neighbour 17_9 and 16_6 respectively)
+    # bad solution here. only used for the Manhattan network!! (Add neighbours manually for intersection 17_6 and 16_9, since there is no incoming lane from neighbour 17_9 and 16_6 respectively)
     ######## and remove neighbours manually for intersection 17_9 and 16_6, since there is not outgoing lane to neighbour 17_6 and 16_9 respecively
     if sim.params["road_network"] == "Manhattan":
         add_neighbours_manhattan(sim)

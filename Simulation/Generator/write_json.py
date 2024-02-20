@@ -15,9 +15,10 @@ def write_json_flow_file(vehLen: int = 5,
                          vehMaxSpeed: float = 16.67,
                          vehHeadwayTime: float = 1.5,
                          parameters: dict = {},
-                         roads_IN: list = None,
-                         roads_OUT: list = None,
+                         roads_IN: set = set(),
+                         roads_OUT: set = set(),
                          road_adj_to_IN: dict = {},
+                         roads_INSIDE: set = set(),
                          directory: str = "./",
                          FlowFile: str = "flow",
                          random_routes: bool = False,
@@ -47,33 +48,40 @@ def write_json_flow_file(vehLen: int = 5,
     
     if random_routes:
         # generate all combinations with those roads
-        routes_dict = generate_random_routes(roads_IN, roads_OUT, road_adj_to_IN, parameters)
+        routes_dict = generate_random_routes(roads_IN, roads_OUT, roads_INSIDE, road_adj_to_IN, parameters)
     else:
-        routes_dict = generate_specific_routes(roads_IN, roads_OUT, road_adj_to_IN, parameters)
+        routes_dict = generate_specific_routes(roads_IN, roads_OUT, road_adj_to_IN, roads_INSIDE, parameters)
         all_first_roads = [road[0] for sublist in routes_dict.values() for road in sublist]
         # convert it to a defaultdict, so in case the key does not exist, it will display a (0,0)
         count_starting_roads = defaultdict(int, Counter(all_first_roads))
     
-    
-    
+    num_vehicles = defaultdict(list)
     flow = []
     for desc, routes in routes_dict.items():
         
         for route in routes:
-
-            # regulate amount of inflowing cars
-            # if no endTime --> endTime = -1
-            startTime = np.random.randint(0,40)
-            endTime = -1
-
-
+            
             if random_routes:
                 interval = parameters["interval"]
             else:
                 # increase the interval if that road has many combinations
                 # such that the effective interval between 2 cars remains the same
                 interval = parameters[desc]["effective_interval"] * count_starting_roads[route[0]]
+                
 
+            # create more/"longer" traffic on main roads
+            if desc == "mtm":
+                startTime = 0
+                endTime = random.randint(3000, 4000)
+                
+            elif desc in {"only_bottom", "only_top"}:
+                startTime = random.randint(0, 2400)
+                endTime = min(4000, startTime + interval * 25)
+                
+            # create only a single car for those trips
+            else:
+                startTime = random.randint(10, 3300)
+                endTime = min(4000, startTime + interval * 3)
 
                 
             if random_vehicle_parameters:
@@ -107,7 +115,20 @@ def write_json_flow_file(vehLen: int = 5,
                 "startTime": startTime,
                 "endTime": endTime
             })
+            
+            # count the number of generated vehicles
+            num_interval = (endTime - startTime + 1) // interval
+
+            mod_interval = (endTime - startTime + 1) % interval != 0
+
+            number_of_generated_cars = int(num_interval + mod_interval)   
+
+            for car_start in range(number_of_generated_cars):
+                num_vehicles[desc].append(int(startTime + interval * car_start))
+
         
     # write json file
     json.dump(flow, open(os.path.join(directory, FlowFile), "w"), indent=2)
     print("Successful created a flow file!")
+    
+    return routes_dict, num_vehicles

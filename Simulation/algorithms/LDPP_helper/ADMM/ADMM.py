@@ -61,8 +61,8 @@ def ADMM(sim, pressure_per_phase_id, arguments_id):
 
 
     # Iterate until max_it is reached
-    for _ in tqdm(range(sim.params["max_it"]), desc="ADDM Iteration Step", leave=False):
-        
+    for tau in tqdm(range(sim.params["max_it"]), desc="ADDM Iteration Step", leave=False):
+                
             ###### MIN X ######
             # store all future results
             futures = []
@@ -79,8 +79,8 @@ def ADMM(sim, pressure_per_phase_id, arguments_id):
                 x[intersection] = x_optimized
                 objective[intersection].append(obj_val)
                 pressure[intersection].append(pressure_val)
-
-        
+                
+            
             ###### MIN Z ######
             # Parallel maximization of compute parallel min z
             futures = []
@@ -94,13 +94,12 @@ def ADMM(sim, pressure_per_phase_id, arguments_id):
             for intersection, z_optimized in min_z_results:
                 z[intersection] = z_optimized
 
-        
             ###### DUAL VARIABLE ######
             for intersection in sim.intersections_data:
-                for neighbour in sim.intersections_data[intersection]["neighbours"]:
+                for neighbour in sim.intersections_data[intersection]["neighbours"].union({intersection}):
                     
                     # the bracket is a difference of two numpy arrays containing phases
                     lambda_[intersection][neighbour] += sim.params["rho"] * (x[intersection][neighbour] - z[neighbour])
-
-
+     
+                
     return x, objective, pressure

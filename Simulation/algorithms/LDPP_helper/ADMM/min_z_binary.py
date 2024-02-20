@@ -26,26 +26,48 @@ def min_z(arguments, agent_intersection, x, lambda_):
     # Create variables
     z = m.addVars(len(arguments["params"]["all_phases"][intersection_phase_type]), vtype=GRB.BINARY, name="z")
     
+    diff = m.addVars(
+        [
+            (neighbour, phase)
+            for phase in arguments["params"]["all_phases"][arguments["params"]["intersection_phase"][agent_intersection]]
+            for neighbour in neighbouring_intersections
+        ],
+        vtype=GRB.CONTINUOUS,
+        lb = -2,
+        name="diff",
+    )
+    
+    norm = m.addVars(neighbouring_intersections, vtype=GRB.CONTINUOUS, name="norm")
+    
     # add constraint such that there is only 1 active phase per intersection
     m.addConstr(z.sum() == 1, name=f"z_constr")
     
-    
     # define a linear expression for the ADMM consensus part
-    ADMM_obj = gp.LinExpr(0)
+    ADMM_obj = gp.QuadExpr(0)
     
     # instead of interating over all M(i,j) = g, we iterate over all neighbours,
     # since each neighbour holds 1 entry, such that M(i,j) = g
     for neighbour in neighbouring_intersections:
+                
+        m.addConstrs((
+            diff[neighbour, phase] == x[neighbour][agent_intersection][phase] - z[phase]
+            for phase in arguments["params"]["all_phases"][intersection_phase_type]
+            ),
+            name = f"diff_{neighbour}"
+        )
         
-        # add the first term to the objective (lambda * z)
-        ADMM_obj += lambda_[neighbour][agent_intersection] @ z.select("*")
-             
-        # add the second term to the objective (rho * x * z)
-        ADMM_obj += arguments["params"]["rho"] * x[neighbour][agent_intersection] @ z.select("*")
+        # SECOND TERM
+        ADMM_obj.add(lambda_[neighbour][agent_intersection].T @ diff.select(neighbour, '*'))
+            
+        # LAST TERM
+        m.addGenConstrNorm(norm[neighbour], diff.select(neighbour, '*'), 2.0, "normconstr")
+        
+        # add the squared norm to the objective
+        ADMM_obj.add(norm[neighbour] * norm[neighbour] * arguments["params"]["rho"]/2)
         
     
     # set the objective value
-    m.setObjective(ADMM_obj, GRB.MAXIMIZE)
+    m.setObjective(ADMM_obj, GRB.MINIMIZE)
     
     # optimize model
     m.optimize()
@@ -61,7 +83,7 @@ def min_z(arguments, agent_intersection, x, lambda_):
 
 
     # save the optimal results
-    z_optimized = np.array([z_phase.X for z_phase in z.select()], dtype=int)
+    z_optimized = np.array(np.round([z_phase.X for z_phase in z.select()]), dtype=int)
 
     m.dispose()
 

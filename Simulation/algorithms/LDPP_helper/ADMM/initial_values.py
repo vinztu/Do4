@@ -43,7 +43,7 @@ def create_initial_values(sim):
             neighbour_phase_type = sim.params["intersection_phase"][neighbour]
             
             # use floats here in case we use continuous z, since we need to add subtract x - z later (so both are floats)
-            x_i = np.zeros(len(sim.params["all_phases"][neighbour_phase_type]) , dtype=float)
+            x_i = np.zeros(len(sim.params["all_phases"][neighbour_phase_type]) , dtype=np.float64)
 
             # set 1 random entry to 1
             idx = np.random.randint(len(sim.params["all_phases"][neighbour_phase_type]))

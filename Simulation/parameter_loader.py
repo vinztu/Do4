@@ -27,16 +27,16 @@ def load_parameters_common(road_network, ext_dict):
     delta = 20
 
     # idle time (idle time <= delta)
-    idle_time = 5
+    idle_time = 0
 
     # simulation duration
-    sim_duration = 4000
+    sim_duration = 1600
 
     # saturation flow rate
     saturation_flow = 0.7
 
     # capacity of a lane (can load a json file in initialization.py with individual capacities)
-    capacity = 15
+    capacity = 25
     
 
     common_params = {
@@ -81,7 +81,7 @@ def load_parameters_Fixed_Time():
         "intersection_17_6": intersection_17_6_phase_sequence
     }
     
-    return fixed_time_params
+    return {"fixed_time_params": fixed_time_params}
 
 def load_parameters_MP():
     # Additional parameters specific to MP algorithm
@@ -145,13 +145,13 @@ def load_parameters_LDPP(algorithm, common_params):
     max_it = 30
     
     # lagrangian parameter rho
-    rho = 3
+    rho = 0.5
     
     # determine domain for z ("binary" or "continuous") --> affects z-update
     z_domain = "binary"
     
     # saturation flow (not the flow, but the maximal number of cars that flow during 1 delta cycle)
-    saturation_flow = common_params["saturation_flow"] * common_params["delta"]
+    saturation_flow = 15 #common_params["saturation_flow"] * common_params["delta"]
     
     LDPP_params = {
         "max_it": max_it,
@@ -161,14 +161,14 @@ def load_parameters_LDPP(algorithm, common_params):
     }
     
     if "LDPP-T" in algorithm:
-        L = 10
-        V1 = 1
+        L = 7 # don't set to 0 (even though V3 = 0)
+        V1 = 2
         V2 = 1
-        V3 = 5
+        V3 = 0.5
         temp = {"L": L, "V1": V1, "V2": V2, "V3": V3}
         
     elif "LDPP-GF" in algorithm:
-        lane_weight = "constant" # or traffic_dependent
+        lane_weight = "traffic_dependent" # constant or traffic_dependent
         gamma = 1 # if lane_weight == "constant", choose the weight (or could be chosen to be different per lane in initialization.py)
         V = 10
         temp = {"lane_weight": lane_weight, "gamma": gamma, "V": V}

@@ -31,12 +31,14 @@ def compute_pressure(arguments, intersection):
         
         movement_id = arguments["lanes_data"][lane][1]
         
+        # need this condition as there can be multiple lanes with the same movement_id
+        # Do not want to count downstream lanes multiple times
         if movement_id not in pressure_per_movement:
             downstream_lanes = arguments["lanes_data"][lane][3]
             # here we assume a uniform turn ratio
-            pressure_per_movement[movement_id] = (lane_vehicle_count[lane] - sum(lane_vehicle_count[l] for l in downstream_lanes)/len(downstream_lanes)) * arguments["params"]["saturation_flow"]
+            pressure_per_movement[movement_id] = (lane_vehicle_count[lane] - sum(lane_vehicle_count[l] for l in downstream_lanes)/len(downstream_lanes)) #* arguments["params"]["saturation_flow"]
         else:
-            pressure_per_movement[movement_id] += lane_vehicle_count[lane] * arguments["params"]["saturation_flow"]
+            pressure_per_movement[movement_id] += lane_vehicle_count[lane] #* arguments["params"]["saturation_flow"]
 
                     
     ##############################################################################

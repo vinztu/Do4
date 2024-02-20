@@ -1,4 +1,5 @@
 import json
+import cityflow
 
 def read_roadmap(Road_map_Json):
     """Returns all roads, where each road is connected
@@ -36,13 +37,27 @@ def read_roadmap(Road_map_Json):
     for road in data["roads"]:
         if road["startIntersection"] in virtual_intersections:
             road_adj_virt_intersection_IN.add(road["id"])
-            road_adj_to_IN[road["id"]] = "road" + road["endIntersection"][-4:] + "_" + str(Mapping_IN_to_OUT[int(road["id"][-1])])
+            
+            end_intersection = road["endIntersection"].split("_")
+            road_adj_to_IN[road["id"]] = "road_" + "_".join(end_intersection[-2:]) + "_" + str(Mapping_IN_to_OUT[int(road["id"][-1])])
             
         if road["endIntersection"] in virtual_intersections:
             road_adj_virt_intersection_OUT.add(road["id"])
         
-      
+    
+    # config file
+    config_file = Road_map_Json.rstrip("roadnet.json") + "config.json"
+    
+    # start the engine to later retrieve all lane id's
+    engine = cityflow.Engine(config_file, 1)
+    
+    # get all lane id's in the entire network
+    lane_ids = engine.get_lane_vehicle_count().keys()
+    
+    roads_INSIDE = {road[:-2] for road in lane_ids if road[:-2] not in road_adj_virt_intersection_IN.union(road_adj_virt_intersection_OUT)}
+    
+    
     # Closing file
     f.close()
     
-    return road_adj_virt_intersection_IN, road_adj_virt_intersection_OUT, road_adj_to_IN
+    return road_adj_virt_intersection_IN, road_adj_virt_intersection_OUT, road_adj_to_IN, roads_INSIDE
