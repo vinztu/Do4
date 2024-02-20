@@ -151,7 +151,7 @@ def load_parameters_LDPP(algorithm, common_params):
     z_domain = "binary"
     
     # saturation flow (not the flow, but the maximal number of cars that flow during 1 delta cycle)
-    saturation_flow = 15 #common_params["saturation_flow"] * common_params["delta"]
+    saturation_flow = common_params["saturation_flow"] * common_params["delta"]
     
     LDPP_params = {
         "max_it": max_it,

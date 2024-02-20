@@ -55,45 +55,43 @@ def main(algorithm, road_network, write_phase_to_json, load_capacities, ext_dict
 import numpy as np
 from itertools import product
 
-
 delta_and_idle = [(20, 0)]
 # small between 12 - 15 cars per lane
-capacity = [10]
-V1 = [0, 1, 5]
-V2 = [0, 1, 5]
-V3 = [0, 1, 5]
+capacity = [13, 25]
+V1 = [0, 1, 3]
+V2 = [0, 1, 3]
+V3 = [0, 1, 3]
 L = [5, 20]
-rho = [0.2, 1]
-
+rho = [0.5, 2]
 
 # used algorithm
-# MP, CA_MP, Centralized, LDPP + T/GF + ADMM/Greedy
-algorithm = "LDPP-T-Greedy"
+# Fixed-Time, MP, CA_MP, Centralized, LDPP + T/GF + ADMM/Greedy
+algorithm = "LDPP-T-ADMM"
 
 # Specify which road network to use (dir name)
 road_network = "3_4_Fine"
 
 # write phase definitions back to roadnet file
-write_phase_to_json = False
+write_phase_to_json = True
 
 # use custom .json file with capacities
 load_capacities = False
 
 # Generate all possible combinations of parameter values
-parameter_combinations = product(delta_and_idle)
+parameter_combinations = product(delta_and_idle, capacity, V1, V2, V3, L, rho)
 
 for i, combination in enumerate(parameter_combinations):
-    
+        
     ext_dict = {
         "delta": combination[0][0],
         "idle_time": combination[0][1],
-        "alpha": combination[1],
-        "scaling": combination[2],
-        "prediction_horizon": combination[3],
-        #"V3": combination[4],
-        #"L": combination[5],
-        #"rho": combination[6]
+        "capacity": combination[1],
+        "V1": combination[2],
+        "V2": combination[3],
+        "V3": combination[4],
+        "L": combination[5],
+        "rho": combination[6]
     }
-    print(ext_dict)
     
-    main(algorithm, road_network, write_phase_to_json, load_capacities, ext_dict)
+    print(ext_dict)
+    main(algorithm, road_network, ext_dict)
