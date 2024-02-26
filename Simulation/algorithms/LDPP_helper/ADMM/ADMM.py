@@ -93,7 +93,8 @@ def ADMM(sim, pressure_per_phase_id, arguments_id):
             min_z_results = ray.get(futures)
             for intersection, z_optimized in min_z_results:
                 z[intersection] = z_optimized
-
+               
+            
             ###### DUAL VARIABLE ######
             for intersection in sim.intersections_data:
                 for neighbour in sim.intersections_data[intersection]["neighbours"].union({intersection}):
@@ -101,5 +102,5 @@ def ADMM(sim, pressure_per_phase_id, arguments_id):
                     # the bracket is a difference of two numpy arrays containing phases
                     lambda_[intersection][neighbour] += sim.params["rho"] * (x[intersection][neighbour] - z[neighbour])
      
-                
+    
     return x, objective, pressure

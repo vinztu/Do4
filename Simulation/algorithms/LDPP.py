@@ -29,8 +29,9 @@ def LDPP(sim):
     for intersection in sim.intersections_data:
         _, pressure_pp[intersection] = compute_pressure(args, intersection)
         
-    pressure_per_phase_id = pressure_pp#ray.put(pressure_pp)
+    pressure_per_phase_id = ray.put(pressure_pp)
 
+    
     # Consensus
     if "ADMM" in sim.algorithm:
         x, objective, pressure = ADMM(sim, pressure_per_phase_id, arguments_id)
@@ -53,6 +54,6 @@ def LDPP(sim):
         if "LDPP-T" in sim.algorithm:
             # update past decisions (delete last entry and add the latest phase)
             sim.params["phase_history"][intersection][1:] = sim.params["phase_history"][intersection][:-1]
-            sim.params["phase_history"][intersection][0] = chosen_phase       
+            sim.params["phase_history"][intersection][0] = chosen_phase 
     
     return highest_phases

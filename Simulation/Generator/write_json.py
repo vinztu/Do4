@@ -3,7 +3,7 @@ import random
 import json
 import os
 from collections import Counter, defaultdict
-from generator.generate_routes import generate_random_routes, generate_specific_routes
+from generate_routes import generate_random_routes, generate_specific_routes
 
 def write_json_flow_file(vehLen: int = 5,
                          vehWidth: int = 2,
@@ -68,22 +68,11 @@ def write_json_flow_file(vehLen: int = 5,
                 # such that the effective interval between 2 cars remains the same
                 interval = parameters[desc]["effective_interval"] * count_starting_roads[route[0]]
                 
-
-            # create more/"longer" traffic on main roads
-            if desc == "mtm":
-                startTime = 0
-                endTime = random.randint(3000, 4000)
+            # define start and end time
+            startTime = random.randint(0, 500)
+            endTime = random.randint(3000, 4000)
                 
-            elif desc in {"only_bottom", "only_top"}:
-                startTime = random.randint(0, 2400)
-                endTime = min(4000, startTime + interval * 25)
-                
-            # create only a single car for those trips
-            else:
-                startTime = random.randint(10, 3300)
-                endTime = min(4000, startTime + interval * 3)
-
-                
+            
             if random_vehicle_parameters:
                 # slighly randomize further parameters
                 vehMaxPosAcc = random.uniform(2.5, 4.0)
@@ -116,7 +105,8 @@ def write_json_flow_file(vehLen: int = 5,
                 "endTime": endTime
             })
             
-            # count the number of generated vehicles
+            
+            ### count the number of generated vehicles
             num_interval = (endTime - startTime + 1) // interval
 
             mod_interval = (endTime - startTime + 1) % interval != 0

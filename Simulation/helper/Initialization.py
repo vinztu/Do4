@@ -199,12 +199,6 @@ def initialize(sim, load_capacities):
         """ Used to initialize an empty list for the penalty function in the LDPP algorithm """
         sim.params["constant_weight"] = {lane: 1 for lane in sim.lanes_data}
         sim.params["phase_history"] = {intersection: np.ones(sim.params["L"])*(-1) for intersection in sim.intersections_data}
-        
-    def LDPP_GF_initialization(sim):
-        """ Used to initialize the weight for each lane in the penalty. Here a different weight for each lane could be chosen. (Default: same for each lane)
-        Only active if algorithm = LDPP-GF and lane_weight = "constant"
-        """
-        sim.params["gamma"] = {lane: sim.params["gamma"] for lane in sim.lanes_data}
 
     def Fixed_Time_initialization(sim):
         
@@ -240,9 +234,6 @@ def initialize(sim, load_capacities):
         
     if "LDPP-T" in sim.algorithm:
         LDPP_T_initialization(sim)
-        
-    if "LDPP-GF" in sim.algorithm:
-        LDPP_GF_initialization(sim)
         
     if "Fixed-Time" in sim.algorithm:
         Fixed_Time_initialization(sim)

@@ -69,19 +69,13 @@ rho = [0.5, 2]
 algorithm = "LDPP-T-ADMM"
 
 # Specify which road network to use (dir name)
-road_network = "3_4_Fine"
+road_network = "Manhattan"
 
 # write phase definitions back to roadnet file
-write_phase_to_json = True
+write_phase_to_json = True if road_network != "Manhattan" else False
 
 # use custom .json file with capacities
-load_capacities = False
-
-# write phase definitions in roadnet.json file if True
-write_phase_to_json = True
-
-# load "custom" capacities in separate json file if True (else define in parameter_loader.py)
-load_capacities = False
+load_capacities = False if road_network != "Manhattan" else True
 
 # Generate all possible combinations of parameter values
 parameter_combinations = product(delta_and_idle, capacity, V1, V2, V3, L, rho)

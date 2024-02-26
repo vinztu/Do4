@@ -12,7 +12,7 @@ def load_parameters_common(road_network, ext_dict):
     dir_config_file = f'Simulation_Results/{road_network}/config.json'
 
     # number of simulation rounds
-    number_of_rounds = 1
+    number_of_rounds = 2
 
     # Predefined phases
     all_phases = phase_definitions()
@@ -145,7 +145,7 @@ def load_parameters_LDPP(algorithm, common_params):
     max_it = 30
     
     # lagrangian parameter rho
-    rho = 8
+    rho = 0.5
     
     # determine domain for z ("binary" or "continuous") --> affects z-update
     z_domain = "binary"
@@ -169,9 +169,8 @@ def load_parameters_LDPP(algorithm, common_params):
         
     elif "LDPP-GF" in algorithm:
         lane_weight = "traffic_dependent" # constant or traffic_dependent
-        gamma = 1 # if lane_weight == "constant", choose the weight (or could be chosen to be different per lane in initialization.py)
         V = 10
-        temp = {"lane_weight": lane_weight, "gamma": gamma, "V": V}
+        temp = {"lane_weight": lane_weight, "V": V}
         
     else:
         print(f"WRONG ALGORITHM NAME: {algorithm}! Choose either LDPP-T or LDPP-GF.")

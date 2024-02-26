@@ -55,6 +55,9 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     # create a new model
     m = gp.Model(f"min_x_{agent_intersection}", env=env)
     
+    # add this line due to a bug in Gurobi v11, that calculates the norm wrongly. Will be fixed in version v11.0.1
+    m.setParam("DualReductions", 0)
+    
     # a list with all neighbouring intersections including agent_intersection
     neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
@@ -257,10 +260,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
 
     # optimize model
     m.optimize()
-    
-    if agent_intersection == "intersection_1_1":
-        m.write("new.lp")
-
+   
     # check for status of the optimization problem
     status = m.Status
     if status == GRB.UNBOUNDED:

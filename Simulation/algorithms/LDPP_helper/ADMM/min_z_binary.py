@@ -17,6 +17,9 @@ def min_z(arguments, agent_intersection, x, lambda_):
     # create a new model
     m = gp.Model(f"min_z_{agent_intersection}", env=env)
     
+    # add this line due to a bug in Gurobi v11, that calculates the norm wrongly. Will be fixed in version v11.0.1
+    m.setParam("DualReductions", 0)
+    
     # a list with all neghbouring intersections
     neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
@@ -34,10 +37,12 @@ def min_z(arguments, agent_intersection, x, lambda_):
         ],
         vtype=GRB.CONTINUOUS,
         lb = -2,
+        ub = 2,
         name="diff",
     )
     
-    norm = m.addVars(neighbouring_intersections, vtype=GRB.CONTINUOUS, name="norm")
+    # upper bound can maximally be sqrt(2) and lower bound 0
+    norm = m.addVars(neighbouring_intersections, ub = 2, vtype=GRB.CONTINUOUS, name="norm")
     
     # add constraint such that there is only 1 active phase per intersection
     m.addConstr(z.sum() == 1, name=f"z_constr")
@@ -60,10 +65,10 @@ def min_z(arguments, agent_intersection, x, lambda_):
         ADMM_obj.add(lambda_[neighbour][agent_intersection].T @ diff.select(neighbour, '*'))
             
         # LAST TERM
-        m.addGenConstrNorm(norm[neighbour], diff.select(neighbour, '*'), 2.0, "normconstr")
+        m.addGenConstrNorm(norm[neighbour], diff.select(neighbour, '*'), 2.0, f"normconstr_{neighbour}")
         
         # add the squared norm to the objective
-        ADMM_obj.add(norm[neighbour] * norm[neighbour] * arguments["params"]["rho"]/2)
+        ADMM_obj.add(norm[neighbour] * norm[neighbour] * arguments["params"]["rho"] / 2)
         
     
     # set the objective value
@@ -84,7 +89,7 @@ def min_z(arguments, agent_intersection, x, lambda_):
 
     # save the optimal results
     z_optimized = np.array(np.round([z_phase.X for z_phase in z.select()]), dtype=int)
-
+    
     m.dispose()
 
     return agent_intersection, z_optimized

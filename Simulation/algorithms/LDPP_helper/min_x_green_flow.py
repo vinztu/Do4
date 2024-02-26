@@ -5,7 +5,8 @@ import ray
 
 from Simulation.algorithms.LDPP_helper.ADMM.ADMM_opt_objective import ADMM_objective
 from Simulation.algorithms.LDPP_helper.Greedy.fix_phases_constraint import fix_phases
-
+   
+            
 @ray.remote
 def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ = None, DET = None, optimal_phases = None):
     """ Gurobi model and solver for minimizing the x variable for the ADMM-update 
@@ -55,6 +56,9 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     # create a new model
     m = gp.Model(f"min_x_{agent_intersection}", env=env)
     
+    # add this line due to a bug in Gurobi v11, that calculates the norm wrongly. Will be fixed in version v11.0.1
+    m.setParam("DualReductions", 0)
+    
     # a list with all neghbouring intersections
     neighbouring_intersections = arguments["intersections_data"][agent_intersection]["neighbours"].union({agent_intersection})
     
@@ -77,8 +81,8 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         m.addConstr(x.sum(neighbour, "*") == 1, name=f"phase_{neighbour}")
     
     # Greedy algorithm needs an extra set of constraints to fix the phases that are already determined
-    if "Greedy" in arguments["algorithm"]:
-        fix_phases(m, x, DET, optimal_phases, agent_intersection, neighbouring_intersections)
+    #if "Greedy" in arguments["algorithm"]:
+    #    fix_phases(m, x, DET, optimal_phases, agent_intersection, neighbouring_intersections)
     
     # define a linear part for the penalty function
     pressure = gp.LinExpr(0)
@@ -98,9 +102,6 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         # movement_id and downstream lanes of lane
         movement_lane = arguments["lanes_data"][lane][1]
         downstream_lanes = arguments["lanes_data"][lane][3]
-        
-        # determine phase type for this intersection
-        intersection_phase_type = arguments["params"]["intersection_phase"][agent_intersection]
     
         # find out which phases includes that movement_id
         corresponding_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][intersection_phase_type].items() if movement_lane in movement_list]
@@ -122,34 +123,33 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
             # find out which phaes includes that movement_d_lane
             d_intersection_phase_type = arguments["params"]["intersection_phase"][intersection_d_lane]
             corresponding_phase_d_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][d_intersection_phase_type].items() if movement_d_lane in movement_list]
-            
-            
+           
             # check if the lane is a right turn
             # In both cases, we do not consider them
             if len(corresponding_phase_d_lane) == len(arguments["params"]["all_phases"][d_intersection_phase_type]):
                 continue
             
-            
             # define penalty weight
             if arguments["params"]["lane_weight"] == "constant":
-                gamma = arguments["params"]["gamma"][d_lane]
+                gamma = 1
                 
             elif arguments["params"]["lane_weight"] == "traffic_dependent":
                 gamma = arguments["lane_vehicle_count"][d_lane]
                 
             else:
-                print(f'Wrong arguments["params"]["lane_weight"]: {arguments["params"]["lane_weight"]}')
+                raise ValueError(f'Wrong arguments["params"]["lane_weight"]: {arguments["params"]["lane_weight"]}')
         
-        
-            penalty = arguments["params"]["V"] * gamma
+            
+            # combine the weights
+            weight = arguments["params"]["V"] * gamma
             
             # iterate over all phases that are included
             for phase_lane in corresponding_phase_lane:
                 for phase_d_lane in corresponding_phase_d_lane:
                     # subtract (as it is a reward)
-                    pen -= penalty * x[agent_intersection, phase_lane] * x[intersection_d_lane, phase_d_lane]
-                    
-        
+                    pen -= weight * x[agent_intersection, phase_lane] * x[intersection_d_lane, phase_d_lane]
+    
+    
     ##################### ADMM TERMS #####################
     # define a quadratic expression for the ADMM consensus part
     ADMM_obj = gp.QuadExpr(0)
@@ -182,10 +182,11 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
     for neighbour in neighbouring_intersections:
         # do round as otherwise sometimes this could lead to some issues with dtype=int
         x_optimized[neighbour] = np.array([round(x_phase.X) for x_phase in x.select(neighbour, '*')], dtype=int)
-        assert sum(x_optimized[neighbour]) == 1, f"sum is {sum(x_optimized[neighbour])}" # safety condition
+        assert sum(x_optimized[neighbour]) == 1, f"sum is {sum(x_optimized[neighbour])} for {neighbour}" # safety condition
 
     
     obj_val = m.ObjVal
+    
     pressure_val = pressure_per_phase[agent_intersection][np.argmax(x_optimized[agent_intersection])]
     
     m.dispose()

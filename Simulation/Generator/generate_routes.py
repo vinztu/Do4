@@ -18,10 +18,10 @@ def generate_valid_combinations(road_in, road_out, road_adj_to_IN, percentage, i
     return filtered_combinations
 
 
-def generate_predefined_routes(parameters):
+def generate_predefined_routes(parameters, roads):
     all_combinations = []
     
-    main_roads = parameters["main_roads"]
+    main_roads = parameters[roads]
     
     for combinations in main_roads.values():
         all_combinations.append(combinations)
@@ -200,99 +200,91 @@ def generate_specific_routes(roads_IN, roads_OUT, road_adj_to_IN, roads_INSIDE, 
         dict: dict of all combinations
     """
     
-    # find all main inflowing and outflowing roads 
-    if parameters["predefined_main"]:
-        main_roads_IN = []
-        main_roads_OUT = []
-
-        for roads in parameters["main_roads"].values():
-            main_roads_IN.append(roads[0])
-            main_roads_OUT.append(roads[-1])
-            
-    else:
-        main_roads_IN = [road for road in parameters["main_roads"] if road in roads_IN]
-        main_roads_OUT = parameters["main_roads"].difference(main_roads_IN)
+    main_roads_IN = []
+    main_roads_OUT = []
+    for combination in list(parameters["avenues_dic"].values()) + list(parameters["streets_dic"].values()):
+        main_roads_IN.append(combination[0])
+        main_roads_OUT.append(combination[1])
+    
     
     # find all side inflowing and outflowing roads
     side_roads_IN = [road for road in parameters["side_roads"] if road in roads_IN]
     side_roads_OUT = parameters["side_roads"].difference(side_roads_IN)
     
     ### create combinations according to specifications
-    if parameters["predefined_main"]:
-        # main to main roads
-        main_to_main = generate_predefined_routes(parameters) # just creates lists out of the predefined dict
-    else:
-        # main to main roads
-        main_to_main = generate_valid_combinations(main_roads_IN, main_roads_OUT, road_adj_to_IN, parameters["mtm"]["ratio"])
-
-        
+    # just creates lists out of the predefined dict
+    avenues = generate_predefined_routes(parameters, "avenues_dic") # just creates lists out of the predefined dict
+    streets = generate_predefined_routes(parameters, "streets_dic") # just creates lists out of the predefined dict
+          
     # main to side roads
-    main_to_side = generate_valid_combinations(main_roads_IN, side_roads_OUT, road_adj_to_IN, parameters["mts"]["ratio"])
-    
-    # side to side roads
-    side_to_side = generate_valid_combinations(side_roads_IN, side_roads_OUT, road_adj_to_IN, parameters["sts"]["ratio"])
-    
-    # side to main roads
-    side_to_main = generate_valid_combinations(side_roads_IN, main_roads_OUT, road_adj_to_IN, parameters["stm"]["ratio"])
-                              
-    # inside to outside roads
-    inside_to_outside = generate_valid_combinations(roads_INSIDE, set(main_roads_OUT).union(side_roads_OUT), road_adj_to_IN, parameters["ito"]["ratio"], True)
-                              
-    # outside to inside roads
-    outside_to_inside = generate_valid_combinations(set(main_roads_IN).union(side_roads_IN), roads_INSIDE, road_adj_to_IN, parameters["oti"]["ratio"], True)
-    
-    # inside to inside roads
-    inside_to_inside = generate_inside_combinations(roads_INSIDE, parameters["iti"]["ratio"])
-    
-    # horizontal traffic
-    horizontal_traffic = generate_horizontal_combinations(roads_INSIDE, parameters["horizontal"]["ratio"])
-    
-    # top traffic
-    top_traffic = generate_top_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["top"]["ratio"])
-    
-    # left traffic
-    left_traffic = generate_left_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["left"]["ratio"])
-    
-    # bottom traffic
-    bottom_traffic = generate_bottom_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["bottom"]["ratio"])
-    
-    only_bottom = generate_only_bottom_straight_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["only_bottom"]["ratio"])
-                              
-    only_top = generate_only_top_straight_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["only_top"]["ratio"])
+    #main_to_side = generate_valid_combinations(main_roads_IN, side_roads_OUT, road_adj_to_IN, parameters["mts"]["ratio"])
+#
+    ## side to side roads
+    #side_to_side = generate_valid_combinations(side_roads_IN, side_roads_OUT, road_adj_to_IN, parameters["sts"]["ratio"])
+    #
+    ## side to main roads
+    #side_to_main = generate_valid_combinations(side_roads_IN, main_roads_OUT, road_adj_to_IN, parameters["stm"]["ratio"])
+    #                          
+    ## inside to outside roads
+    #inside_to_outside = generate_valid_combinations(roads_INSIDE, set(main_roads_OUT).union(side_roads_OUT), road_adj_to_IN, parameters["ito"]["ratio"], True)
+    #                          
+    ## outside to inside roads
+    #outside_to_inside = generate_valid_combinations(set(main_roads_IN).union(side_roads_IN), roads_INSIDE, road_adj_to_IN, parameters["oti"]["ratio"], True)
+    #
+    ## inside to inside roads
+    #inside_to_inside = generate_inside_combinations(roads_INSIDE, parameters["iti"]["ratio"])
+    #
+    ## horizontal traffic
+    #horizontal_traffic = generate_horizontal_combinations(roads_INSIDE, parameters["horizontal"]["ratio"])
+    #
+    ## top traffic
+    #top_traffic = generate_top_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["top"]["ratio"])
+    #
+    ## left traffic
+    #left_traffic = generate_left_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["left"]["ratio"])
+    #
+    ## bottom traffic
+    #bottom_traffic = generate_bottom_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["bottom"]["ratio"])
+    #
+    #only_bottom = generate_only_bottom_straight_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["only_bottom"]["ratio"])
+    #                          
+    #only_top = generate_only_top_straight_combinations(roads_INSIDE.union(side_roads_IN), roads_INSIDE.union(side_roads_OUT), parameters["only_top"]["ratio"])
     
     all_combinations = {
-        "mtm": main_to_main,
-        "mts": main_to_side,
-        "sts": side_to_side,
-        "stm": side_to_main,
-        "ito": inside_to_outside,
-        "oti": outside_to_inside,
-        "iti": inside_to_inside,
-        "horizontal": horizontal_traffic,
-        "top": top_traffic,
-        "left": left_traffic,
-        "bottom": bottom_traffic,
-        "only_bottom": only_bottom,
-        "only_top": only_top
+        "avenues": avenues,
+        "streets": streets,
+        #"mts": main_to_side,
+        #"sts": side_to_side,
+        #"stm": side_to_main,
+        #"ito": inside_to_outside,
+        #"oti": outside_to_inside,
+        #"iti": inside_to_inside,
+        #"horizontal": horizontal_traffic,
+        #"top": top_traffic,
+        #"left": left_traffic,
+        #"bottom": bottom_traffic,
+        #"only_bottom": only_bottom,
+        #"only_top": only_top
     }
     
     check_flow(all_combinations)
     
     
     print("Number of routes generated (does not give all information about number of cars generated (different intervals))")
-    print(f"mtm: {len(main_to_main)}")
-    print(f"mts: {len(main_to_side)}")
-    print(f"sts: {len(side_to_side)}")
-    print(f"stm: {len(side_to_main)}")
-    print(f"ito: {len(inside_to_outside)}")
-    print(f"oti: {len(outside_to_inside)}")
-    print(f"iti: {len(inside_to_inside)}")
-    print(f"horizontal: {len(horizontal_traffic)}")
-    print(f"top: {len(top_traffic)}")
-    print(f"left: {len(left_traffic)}")
-    print(f"bottom: {len(bottom_traffic)}")
-    print(f"only bottom: {len(only_bottom)}")
-    print(f"only top: {len(only_top)}")
+    print(f"avenues: {len(avenues)}")
+    print(f"streets: {len(streets)}")
+    #print(f"mts: {len(main_to_side)}")
+    #print(f"sts: {len(side_to_side)}")
+    #print(f"stm: {len(side_to_main)}")
+    #print(f"ito: {len(inside_to_outside)}")
+    #print(f"oti: {len(outside_to_inside)}")
+    #print(f"iti: {len(inside_to_inside)}")
+    #print(f"horizontal: {len(horizontal_traffic)}")
+    #print(f"top: {len(top_traffic)}")
+    #print(f"left: {len(left_traffic)}")
+    #print(f"bottom: {len(bottom_traffic)}")
+    #print(f"only bottom: {len(only_bottom)}")
+    #print(f"only top: {len(only_top)}")
     print(f"Total flows: {sum(len(flow_list) for flow_list in all_combinations.values())}")
     
     return all_combinations

@@ -19,7 +19,8 @@ def ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections,
         name = "diff"
     )
     
-    norm = m.addVars(neighbouring_intersections, vtype=GRB.CONTINUOUS, name="norm_ADMM")
+    # upper bound can maximally be sqrt(2) and lower bound 0
+    norm = m.addVars(neighbouring_intersections, ub = 2, vtype=GRB.CONTINUOUS, name="norm_ADMM")
     
     for neighbour in neighbouring_intersections:
         
@@ -36,7 +37,6 @@ def ADMM_objective(m, arguments, agent_intersection, neighbouring_intersections,
         # First Term (add 1 lambda * (x - z) term to the objective)
         ADMM_obj.add(lambda_[agent_intersection][neighbour].T @ diff.select(neighbour, '*'))
         
-        
-        # LAST TERM
+        # Last Term
         m.addGenConstrNorm(norm[neighbour], diff.select(neighbour, '*'), 2.0, "normconstr")
         ADMM_obj.add(norm[neighbour]*norm[neighbour]*arguments["params"]["rho"]/2)

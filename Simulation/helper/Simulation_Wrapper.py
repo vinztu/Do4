@@ -61,6 +61,7 @@ def sim_wrapper(sim, metrics_recorder):
         
         # update the progress bar
         tqdm_bar.update(sim.params["delta"])
-    
+        
+        
     # close the progress bar
     tqdm_bar.close()
