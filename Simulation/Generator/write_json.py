@@ -57,20 +57,56 @@ def write_json_flow_file(vehLen: int = 5,
     
     num_vehicles = defaultdict(list)
     flow = []
-    for desc, routes in routes_dict.items():
+    for category, routes in routes_dict.items():
+        
+        if "_" in category:
+            # number of different routes
+            number_of_routes_in_category = len(routes)
+            
+            # number of cars per route (give minimal 1 car)
+            cars_per_route = max(1, parameters["proportions"][category][0] * parameters["total_demand"] / number_of_routes_in_category)
+                
+            if cars_per_route == 1:
+                print(f'WARNING: Less than 1 car generated per lane in category {category}. Currently: {parameters["proportions"][category][0] * parameters["total_demand"] / number_of_routes_in_category}. Decrease Percentage # possible routes in proportions dict for this category.')
+            
+            print(f'category: {category}, num cars: {parameters["proportions"][category][0] * parameters["total_demand"]}')
+        
+        pr = False
         
         for route in routes:
             
+            # define start and end time
+            # if cars_per_route is too small, then the interval will be really large.
+            # --> This leads to cars being generated only at the beginning and once at the end
+            if cars_per_route <= 7 and cars_per_route > 5:
+                startTime = random.randint(0, 1000)
+                endTime = random.randint(3000, 4000)
+            
+            elif cars_per_route <= 5:
+                startTime = random.randint(0, 1900)
+                endTime = random.randint(2200, 4000)
+                
+            else:
+                startTime = random.randint(0, 400)
+                endTime = random.randint(3800, 4000)
+            
             if random_routes:
                 interval = parameters["interval"]
+            
+            # check if its a main road
+            elif "_" in category:
+                # need to create cars_per_route cars during the entire duration
+                interval = float(round((endTime - startTime) / cars_per_route, 2))
+                if not pr:
+                    print(f"interval, category: {category}, interval: {interval}, cars per route: {cars_per_route}")
+                    print()
+                    pr = True
+                
             else:
                 # increase the interval if that road has many combinations
                 # such that the effective interval between 2 cars remains the same
-                interval = parameters[desc]["effective_interval"] * count_starting_roads[route[0]]
+                interval = parameters[category]["effective_interval"] * count_starting_roads[route[0]]
                 
-            # define start and end time
-            startTime = random.randint(0, 500)
-            endTime = random.randint(3000, 4000)
                 
             
             if random_vehicle_parameters:
@@ -114,9 +150,9 @@ def write_json_flow_file(vehLen: int = 5,
             number_of_generated_cars = int(num_interval + mod_interval)   
 
             for car_start in range(number_of_generated_cars):
-                num_vehicles[desc].append(int(startTime + interval * car_start))
+                num_vehicles[category].append(int(startTime + interval * car_start))
 
-        
+
     # write json file
     json.dump(flow, open(os.path.join(directory, FlowFile), "w"), indent=2)
     print("Successful created a flow file!")

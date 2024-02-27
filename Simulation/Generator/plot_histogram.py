@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 def plot_distribution(routes_dict, num_vehicles):
     num_plots = len(num_vehicles)
-    num_cols = 2
+    num_cols = 3
     num_rows = (num_plots + num_cols - 1) // num_cols
     
     # Define the bucket size
@@ -16,8 +16,9 @@ def plot_distribution(routes_dict, num_vehicles):
     for values in num_vehicles.values():
         vehicles_per_hour += len(np.array(values)[np.array(values) < 3600])
 
+    figsize = (num_cols * 3, num_rows * 3)
     # Create the subplots
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(12, 8))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
     
     # total frequencies and bins
     total_frequencies = {}
