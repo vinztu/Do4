@@ -26,7 +26,7 @@ def main(algorithm, road_network, write_phase_to_json, load_capacities, ext_dict
     initialize(sim, load_capacities)
     
     # do some fake computations to warmup ray (consistent computation time)
-    fake_agent()
+    fake_agent(sim)
 
     # do many rounds of the same simulation
     for current_round in range(sim.params["number_of_rounds"]):
@@ -57,12 +57,12 @@ from itertools import product
 
 delta_and_idle = [(20, 0)]
 # small between 12 - 15 cars per lane
-capacity = [13, 25]
-V1 = [0, 1, 3]
-V2 = [0, 1, 3]
-V3 = [0, 1, 3]
-L = [5, 20]
-rho = [0.5, 2]
+#capacity = [13, 25]
+#V1 = [0, 1, 3]
+#V2 = [0, 1, 3]
+#V3 = [0, 1, 3]
+#L = [5, 20]
+#rho = [0.5, 2]
 
 # used algorithm
 # Fixed-Time, MP, CA_MP, Centralized, LDPP + T/GF + ADMM/Greedy
@@ -78,19 +78,19 @@ write_phase_to_json = True if road_network != "Manhattan" else False
 load_capacities = False if road_network != "Manhattan" else True
 
 # Generate all possible combinations of parameter values
-parameter_combinations = product(delta_and_idle, capacity, V1, V2, V3, L, rho)
+parameter_combinations = product(delta_and_idle)# , capacity, V1, V2, V3, L, rho)
 
 for i, combination in enumerate(parameter_combinations):
         
     ext_dict = {
         "delta": combination[0][0],
         "idle_time": combination[0][1],
-        "capacity": combination[1],
-        "V1": combination[2],
-        "V2": combination[3],
-        "V3": combination[4],
-        "L": combination[5],
-        "rho": combination[6]
+        #"capacity": combination[1],
+        #"V1": combination[2],
+        #"V2": combination[3],
+        #"V3": combination[4],
+        #"L": combination[5],
+        #"rho": combination[6]
     }
     
     print(ext_dict)

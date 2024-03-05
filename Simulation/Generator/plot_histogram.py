@@ -10,7 +10,7 @@ def plot_distribution(routes_dict, num_vehicles):
     bucket_size = 50
 
     # Calculate the number of bins based on the bucket size
-    num_bins = int((max(max(values) for values in num_vehicles.values()) + bucket_size) / bucket_size)
+    num_bins = int((max(max(values) for values in num_vehicles.values() if values) + bucket_size) / bucket_size)
     
     vehicles_per_hour = 0
     for values in num_vehicles.values():

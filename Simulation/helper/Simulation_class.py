@@ -53,10 +53,29 @@ class Simulation:
         self.__gurobi_environment()
         
         
-    def reset_variables(self):
-        self.engine.reset()
-        self.perform = self.__define_perform_dict()
-        
+    def reset_variables(self, current_round):
+        if current_round < self.params["number_of_rounds"] - 1:
+            self.engine.reset()
+            self.perform = self.__define_perform_dict()
+            
+            # delete the content of the replay_roadnet.json and replay.txt file
+            with open(self.dir_config_file, "r") as f:
+                config = json.load(f)
+                
+            path = self.dir_config_file.rstrip("config.json")
+            replay_roadnet = config["roadnetLogFile"]
+            replay = config["replayLogFile"]
+            
+            # delete the content
+            with open(path + replay_roadnet, 'r+') as json_file:
+                json_file.truncate(0)
+                
+            with open(path + replay, 'r+') as txt_file:
+                txt_file.truncate(0)
+                
+            print(current_round)
+
+   
         
     def __load_roadnet_file_name(self):
         """ retrieve file name for roadnet file """
@@ -92,6 +111,8 @@ class Simulation:
                 {} nodes in total
                 {} CPU resources in total
             '''.format(len(ray.nodes()), ray.cluster_resources()['CPU']))
+            
+            self.cpu = int(ray.cluster_resources()['CPU'])
 
     
     

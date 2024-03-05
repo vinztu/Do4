@@ -11,6 +11,8 @@ from Simulation.metrics.travel_time import TravelTimeMetric
 from Simulation.metrics.throughput import ThroughputMetric
 from Simulation.metrics.vehicle_speed import AverageVehicleSpeedMetric
 
+from Simulation.metrics.num_instant_vehicles import NumVehiclesInstantaneous
+from Simulation.metrics.num_veh_buffer import NumVehiclesBuffer
 from Simulation.metrics.num_veh_wait import NumWaitingMetric
 from Simulation.metrics.time_veh_wait import TimeWaitingMetric
 from Simulation.metrics.num_of_ent_vehicles import NumberVehicleEnteredMetric
@@ -28,6 +30,8 @@ class Metrics:
         self.travel_time = TravelTimeMetric()
         self.throughput = ThroughputMetric(sim)
         self.vehicle_speed = AverageVehicleSpeedMetric()
+        self.num_vehicles_instant = NumVehiclesInstantaneous()
+        self.vehicle_in_buffer = NumVehiclesBuffer()
         self.num_waiting = NumWaitingMetric()
         self.time_waiting = TimeWaitingMetric(sim)
         self.num_ent_vehicle = NumberVehicleEnteredMetric()
@@ -63,6 +67,7 @@ class Metrics:
         
         
         
+        
     def infrequent_update(self, sim, current_time):
         """ This function will only be called after Delta time steps"""
         
@@ -81,6 +86,10 @@ class Metrics:
         
         # number of times the phase changes per intersection
         self.phase_change.record_values(sim)
+        
+        self.vehicle_in_buffer.record_values(sim)
+        
+        self.num_vehicles_instant.record_values(sim)
         
         
     def __extend_list(self, short_list):
@@ -122,6 +131,8 @@ class Metrics:
             "Travel Time wo Buffer": Travel_time_wo_Buffer,
             "Throughput": self.throughput.get_througput(),
             "Vehicle Speed": self.vehicle_speed.get_vehicles_speed(),
+            "Number of Vehicles Currently in Network": self.num_vehicles_instant.get_num_instant_vehicles(),
+            "Number of Waiting Vehicles in Buffer": self.vehicle_in_buffer.get_num_waiting_buffer(),
             "Waiting Vehicles Per Intersection": self.num_waiting.get_average_num_per_intersection(),
             "Waiting Vehicles Per Lane": self.num_waiting.get_average_number_per_lane(),
             "Waiting Vehicles Per Lane Max": self.num_waiting.get_max_number_per_lane(),

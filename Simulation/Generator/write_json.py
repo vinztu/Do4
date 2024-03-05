@@ -5,6 +5,26 @@ import os
 from collections import Counter, defaultdict
 from generate_routes import generate_random_routes, generate_specific_routes
 
+
+def divide_remaining_cars_on_routes(total_routes, total_cars):
+    """ divide the module "number" of cars onto the last remaining routes per category"""
+
+    rest = ((total_cars/total_routes) - (total_cars//total_routes)) * total_routes
+
+    best_divisor = 1
+    min_remainder = float('inf')  # Initialize with positive infinity
+
+    for div in range(min(10,total_routes) , 0, -1):
+        remainder = rest % div
+        if remainder < min_remainder:
+            increase_num_car_per_route = int(round(rest / div))
+            best_divisor = div
+            if remainder < 0.1:
+                break
+                
+    return best_divisor, increase_num_car_per_route
+
+
 def write_json_flow_file(vehLen: int = 5,
                          vehWidth: int = 2,
                          vehMaxPosAcc: float = 2.0,
@@ -56,58 +76,71 @@ def write_json_flow_file(vehLen: int = 5,
         count_starting_roads = defaultdict(int, Counter(all_first_roads))
     
     num_vehicles = defaultdict(list)
+    sum_routes = 0
+    sum_vehicles = 0
     flow = []
+    
+    print("Number of routes and number of cars in category generated")
     for category, routes in routes_dict.items():
-        
+    
         if "_" in category:
             # number of different routes
             number_of_routes_in_category = len(routes)
             
-            # number of cars per route (give minimal 1 car)
-            cars_per_route = max(1, parameters["proportions"][category][0] * parameters["total_demand"] / number_of_routes_in_category)
-                
-            if cars_per_route == 1:
-                print(f'WARNING: Less than 1 car generated per lane in category {category}. Currently: {parameters["proportions"][category][0] * parameters["total_demand"] / number_of_routes_in_category}. Decrease Percentage # possible routes in proportions dict for this category.')
+            # total number of cars in category
+            total_cars_in_category = parameters["proportions"][category][0] * parameters["total_demand"]
             
-            print(f'category: {category}, num cars: {parameters["proportions"][category][0] * parameters["total_demand"]}')
-        
-        pr = False
-        
-        for route in routes:
+            # number of cars per route (give minimal 1 car)
+            cars_per_route = max(2,  total_cars_in_category // number_of_routes_in_category)
+            
+            # handle to module part to spread the remaining cars
+            best_divisor, increase_num_car_per_route = divide_remaining_cars_on_routes(number_of_routes_in_category, total_cars_in_category)
+            choose_which_routes = np.random.choice(number_of_routes_in_category, size=best_divisor, replace=False)
+            
+            if parameters["proportions"][category][0] * parameters["total_demand"] / number_of_routes_in_category <= 2:
+                print(f'WARNING: Less than 2 cars generated per lane in category {category}. Currently: {round(parameters["proportions"][category][0] * parameters["total_demand"] / number_of_routes_in_category,4)}.\n Decrease Percentage # possible routes in proportions dict for this category to increase generated cars per route. Necessary to reach specified total demand')
+            
+        for index, route in enumerate(routes):
             
             # define start and end time
             # if cars_per_route is too small, then the interval will be really large.
             # --> This leads to cars being generated only at the beginning and once at the end
-            if cars_per_route <= 7 and cars_per_route > 5:
-                startTime = random.randint(0, 1000)
-                endTime = random.randint(3000, 4000)
-            
-            elif cars_per_route <= 5:
-                startTime = random.randint(0, 1900)
-                endTime = random.randint(2200, 4000)
+            if cars_per_route <= 9:
+                startTime = random.randint(0, 1300)
+                endTime = random.randint(2800, 3800)
+                
+            if cars_per_route <= 5:
+                startTime = random.randint(0, 1600)
+                endTime = random.randint(2500, 3800)
                 
             else:
                 startTime = random.randint(0, 400)
                 endTime = random.randint(3800, 4000)
+            
             
             if random_routes:
                 interval = parameters["interval"]
             
             # check if its a main road
             elif "_" in category:
+                
                 # need to create cars_per_route cars during the entire duration
-                interval = float(round((endTime - startTime) / cars_per_route, 2))
-                if not pr:
-                    print(f"interval, category: {category}, interval: {interval}, cars per route: {cars_per_route}")
-                    print()
-                    pr = True
+                if index in choose_which_routes:
+                    # increase selected routes by 1
+                    interval = float(round((endTime - startTime) / (cars_per_route + increase_num_car_per_route - 1), 2))
+                else:
+                    interval = float(round((endTime - startTime) / (cars_per_route - 1), 2))
+                    
                 
             else:
                 # increase the interval if that road has many combinations
                 # such that the effective interval between 2 cars remains the same
                 interval = parameters[category]["effective_interval"] * count_starting_roads[route[0]]
                 
+                startTime = random.randint(0, 3000)
+                endTime = min(4000, startTime + interval * 3)
                 
+            
             
             if random_vehicle_parameters:
                 # slighly randomize further parameters
@@ -141,7 +174,6 @@ def write_json_flow_file(vehLen: int = 5,
                 "endTime": endTime
             })
             
-            
             ### count the number of generated vehicles
             num_interval = (endTime - startTime + 1) // interval
 
@@ -151,10 +183,18 @@ def write_json_flow_file(vehLen: int = 5,
 
             for car_start in range(number_of_generated_cars):
                 num_vehicles[category].append(int(startTime + interval * car_start))
-
-
+            
+        
+        sum_routes += len(routes)
+        sum_vehicles += len(num_vehicles[category])
+        print(f"For {category}:{'':<7} # Routes = {len(routes):<7} # Cars = {len(num_vehicles[category])}")
+        print()
+    
+    print(f"Total routes: {sum_routes}, Total cars: {sum_vehicles}")
     # write json file
     json.dump(flow, open(os.path.join(directory, FlowFile), "w"), indent=2)
+    
+    print()
     print("Successful created a flow file!")
     
     return routes_dict, num_vehicles

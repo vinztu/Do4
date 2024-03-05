@@ -50,7 +50,8 @@ def generate_horizontal_combinations(roads_INSIDE, percentage):
     # only consider combinations that are separated by at least and 3 intersections horizontally
     all_combinations[:] = [comb for comb in all_combinations
                            if ((int(comb[0].split("_")[3]) == 1) or (int(comb[0].split("_")[3]) == 3)) and ((int(comb[1].split("_")[3]) == 1) or (int(comb[1].split("_")[3]) == 3))
-                           and (np.abs(int(comb[0].split("_")[2]) - int(comb[1].split("_")[2])) > 6) and (comb[0] != comb[1])]
+                           and (np.abs(int(comb[0].split("_")[2]) - int(comb[1].split("_")[2])) >= 6) and (np.abs(int(comb[0].split("_")[1]) - int(comb[1].split("_")[1])) >= 6)
+                           and (comb[0] != comb[1])]
     
     # take only a percentage of the remaining valid options
     filtered_combinations = random.sample(all_combinations, round(len(all_combinations) * percentage))
@@ -96,8 +97,9 @@ def check_flow(flow_dict):
     for desc in temp_1:
         new[desc] = f"{temp_1[desc]}/{temp_2[desc]}"
         
-        
+    print("How many horizontal flows per category exist")    
     print(new)
+    print()
 
 
 
@@ -172,10 +174,5 @@ def generate_specific_routes(roads_IN, roads_OUT, road_adj_to_IN, roads_INSIDE, 
     
     check_flow(all_combinations)
     
-    
-    print("Number of routes generated (does not give all information about number of cars generated (different intervals))")
-    for combination, lanes in all_combinations.items():
-        print(f"{combination}: {len(lanes)}")
-    print(f"Total flows: {sum(len(flow_list) for flow_list in all_combinations.values())}")
     
     return all_combinations

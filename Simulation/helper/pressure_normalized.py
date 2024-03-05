@@ -35,9 +35,11 @@ def compute_normalized_pressure(arguments, intersection):
         # take any downstream lane (only road matters and not specific lane)
         d_lane = arguments["lanes_data"][lane][3][0]
 
-        # here we assume a uniform turn ratio
-        # !!! Different pressure definition max(0, MP_pressure)
-        pressure_per_movement[movement_id] = arguments["params"]["saturation_flow"] * max(0, normalize_lane(lane, arguments) - normalize_lane(d_lane, arguments))
+        # d_ab is defined as by Gregoire et al.
+        d_ab = 1 if arguments["lane_vehicle_count"][lane] != 0 else 0
+        
+        # !!! Different pressure definition max(0, MP_pressure) (contrary to the definition, the saturation flow rate gets multiplied already here)
+        pressure_per_movement[movement_id] = d_ab * max(0, normalize_lane(lane, arguments) - normalize_lane(d_lane, arguments)) * arguments["params"]["saturation_flow"]
 
                     
     ##############################################################################
@@ -47,7 +49,7 @@ def compute_normalized_pressure(arguments, intersection):
     
     phase_type = arguments["params"]["intersection_phase"][intersection]
 
-    for index, phase in enumerate(arguments["params"]["all_phases"][phase_type].values()):
+    for phase in arguments["params"]["all_phases"][phase_type].values():
 
         pressure = sum( list( map(pressure_per_movement.get, phase)))
 

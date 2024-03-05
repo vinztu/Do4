@@ -3,7 +3,7 @@
 #SBATCH --job-name=traffic_simulation
 #SBATCH --cpus-per-task=20
 #SBATCH --mem-per-cpu=1GB
-#SBATCH --time=4-00:00:00  # Minimum time limit of 4 days
+#SBATCH --time=2-00:00:00  # Minimum time limit of 4 days
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH --output=output.out

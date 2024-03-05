@@ -55,7 +55,6 @@ class TimeWaitingMetric:
     def get_average_waiting_time(self):
         # We take the average waiting time per vehicle
         average_waiting_time = sum(self.waiting_time.values())/len(self.waiting_time)
-        
         return average_waiting_time
     
     def get_max_waiting_time(self):

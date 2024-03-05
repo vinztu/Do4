@@ -21,4 +21,3 @@ class AverageVehicleSpeedMetric:
             
     def get_vehicles_speed(self):
         return self.vehicles_speed
-        
