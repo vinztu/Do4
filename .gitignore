@@ -23,3 +23,6 @@ Simulation/comparison/Idle_Time/
 *.csv
 */Results/*
 Zotero/
+*OBJECTIVE*
+Simulation/Timelines/
+Simulation/Simulation_Results/Manhattan/backup/
