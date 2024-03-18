@@ -10,18 +10,22 @@ The code uses CityFlow as a simulation environment (https://cityflow-project.git
 
 ## Folder Structure
 
-The simulation folder is organized as follows:
+The simulation folder in `Simulation` is organized as follows:
 
+- **main.ipynb**: This is the main notebook to start the simulation.
+- **main.py**: This is the same as main.ipynb but as a Python file.
+- **test.ipynb**: This notebook is used for testing road networks.
+- **Simulation_Results**: All networks, demand files and the simulation results are stored there
+
+The code for the simulation itself is located in Simulation/simulation_package and is organized as follows:
+
+- **parameter_loader.py**: This file defines various parameters for the simulation for all algorithms.
 - **Generator**: This folder contains the code for generating all possible flow.json and roadnet.json files.
 - **Algorithms**: This folder contains the implementation of various signal traffic algorithms, including Fixed Time Controller, Maximum Pressure (MP), Capacity-aware MP, Centralized, and LDPP with 2 penalty and 2 consensus algorithms.
 - **Comparison**: This folder contains code for comparing simulation results with different parameters, performing sensitivity analysis.
 - **Helper**: This folder contains helper functions used in the simulations.
 - **Metrics**: This folder records various metrics during the simulation and stores them in a .csv file.
 - **Plot**: This folder contains code for plotting the simulation results based on the .csv files.
-- **main.ipynb**: This is the main notebook to start the simulation.
-- **main.py**: This is the same as main.ipynb but as a Python file.
-- **parameter_loader.py**: This file defines various parameters for the simulation for all algorithms.
-- **test.ipynb**: This notebook is used for testing road networks.
 
 ## Sources
 
