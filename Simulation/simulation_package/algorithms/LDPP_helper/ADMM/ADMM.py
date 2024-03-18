@@ -118,10 +118,12 @@ def ADMM(sim, pressure_pp, arguments_id):
                 objective[intersection].append(obj_val)
                 pressure[intersection].append(pressure_val)
             
+            
+            
             ###### MIN Z ######
             # Parallel maximization of compute parallel min z
             futures = []
-    
+
             for intersection in sim.intersections_data:
                 # This remote call returns a future, a so-called Ray object reference
                 futures.append(min_z.remote(arguments_id, intersection, x, lambda_))
@@ -131,6 +133,7 @@ def ADMM(sim, pressure_pp, arguments_id):
             
             for intersection, z_optimized in min_z_results:
                 z[intersection] = z_optimized
+                
             
             ###### DUAL VARIABLE ######
             for intersection in sim.intersections_data:
@@ -140,21 +143,22 @@ def ADMM(sim, pressure_pp, arguments_id):
                     lambda_[intersection][neighbour] += sim.params["rho"] * (x[intersection][neighbour] - z[neighbour])
                     
                     
+                    
             ###### Check the termination condition ######
-            if tau >= 4:
+            if tau >= 5:
                 
                 # sum up objective over each intersection
                 total_objective = list(map(sum, zip(*objective.values())))
 
                 # Calculate the moving average of the last 3 values (t, t-1, t-2)
-                current_moving_average = sum(total_objective[-3:]) / min(len(total_objective), 3)
+                current_moving_average = sum(total_objective[-3:]) / 3
                 
                 # define the threshold to be 1% of the objective value
-                threshold = total_objective[-1] * 0.01
+                threshold = abs(total_objective[-1]) * 0.01
             
                 previous_moving_average = sum(total_objective[-4:-1]) / 3  # Moving average of the last 3 iterations (t-1, t-2, t-3)
                 
-                if previous_moving_average - current_moving_average < threshold:
+                if abs(previous_moving_average - current_moving_average) < threshold:
                     break
             
             # update the progress bar
@@ -168,7 +172,7 @@ def ADMM(sim, pressure_pp, arguments_id):
         tqdm_bar.close()
     
     # save the number of ADMM-iterations rounds
-    sim.params["num_consensus_iterations"].append(tau)
+    sim.params["num_consensus_iterations"].append(tau + 1) # plus 1, since tau starts at 0
     
     #ray.timeline(filename="ray_timeline_ADMM_Computer_3_4.json")
     

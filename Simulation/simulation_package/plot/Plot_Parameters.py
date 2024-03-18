@@ -61,7 +61,7 @@ class PlotParameters:
         labelcolor = "black"
 
     class Legend:
-        loc = "upper right"
+        loc = "upper center" #"upper right"
         frameone = True
         fontsize = 9
         title_fontsize = 11
@@ -73,6 +73,6 @@ class PlotParameters:
         facecolor = "white"
         linewidth = 1.0
         alpha = 0.8
-        bbox_to_anchor = (0.98, 0.93)
+        bbox_to_anchor = (0.5, 1.25) #(0.98, 0.93)
         fancybox = True
         ncol = 3

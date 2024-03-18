@@ -146,12 +146,19 @@ class Metrics:
         if "LDPP" in sim.algorithm:
             performance.update({"Number Consensus Iterations": sim.params["num_consensus_iterations"]})
         
+        
+        if isinstance(sim.params["saturation_flow"], dict) :
+            sat_flow = max(sim.params["saturation_flow"].values())
+        else:
+            sat_flow = sim.params["saturation_flow"]
+            
+        
         # important meta information
         meta_information = {
             "delta": sim.params["delta"],
             "idle_time": sim.params["idle_time"],
             "sim_duration": sim.params["sim_duration"],
-            "saturation_flow": sim.params["saturation_flow"],
+            "saturation_flow": sat_flow,
             "capacity": max(sim.params["capacity"].values())
         }
         important_info, specific_parameters = load_specific_params(sim)

@@ -160,7 +160,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         corresponding_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][intersection_phase_type].items() if movement_id in movement_list]
         
         # determine amount of cars that can leave the lane
-        outflow_lane = sum(min(arguments["lane_vehicle_count"][lane], arguments["params"]["saturation_flow"]) for lane in current_lanes)
+        outflow_lane = sum(min(arguments["lane_vehicle_count"][lane], arguments["params"]["saturation_flow"][lane]) for lane in current_lanes)
         
         # add the outflow to the objective
         outflow_gurobi = gp.LinExpr(0)
@@ -190,7 +190,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
                 corresponding_u_phase_lane = [phase for phase, movement_list in arguments["params"]["all_phases"][u_intersection_phase_type].items() if movement_u_lane in movement_list]
                 
                 # determine amount of cars that can leave the u_lane
-                inflow_lane = min(arguments["lane_vehicle_count"][u_lane], arguments["params"]["saturation_flow"])
+                inflow_lane = min(arguments["lane_vehicle_count"][u_lane], arguments["params"]["saturation_flow"][u_lane])
                 
                 # add the inflow to the objective
                 for phase in corresponding_u_phase_lane:
@@ -199,7 +199,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
         
         # if no upstream lane exists, we assume a constant inflow (d)
         else:
-            inflow_gurobi.add(arguments["params"]["saturation_flow"])
+            inflow_gurobi.add(arguments["params"]["saturation_flow"][current_lanes[0]])
             
         
         ##################### OUTFLOW DOWNSTREAM LANE #####################
@@ -221,7 +221,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
                 intersection_d_lane = arguments["lanes_data"][d_lane][0]
 
                 # determine amount of cars that can leave d_lane
-                outflow_d_lane = min(arguments["lane_vehicle_count"][d_lane], arguments["params"]["saturation_flow"])
+                outflow_d_lane = min(arguments["lane_vehicle_count"][d_lane], arguments["params"]["saturation_flow"][d_lane])
 
                 # if the downstream lane is an exit lane (no intersection_d_lane), then the outflow is constant
                 # and does not depend on a traffic light
@@ -238,7 +238,7 @@ def min_x(pressure_per_phase, arguments, agent_intersection, z = None, lambda_ =
                     outflow_d_gurobi[d_lane].add(x[intersection_d_lane, phase], outflow_d_lane)
             
             else:
-                outflow_d_gurobi[d_lane].add(arguments["params"]["saturation_flow"]) 
+                outflow_d_gurobi[d_lane].add(arguments["params"]["saturation_flow"][current_lanes[0]]) 
         
         ##################### H1 PENALTY #####################
         neighboring_lanes = [l for l in arguments["lanes_data"] if l[:-2] in current_lanes[0]]

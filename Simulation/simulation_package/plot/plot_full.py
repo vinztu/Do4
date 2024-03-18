@@ -56,7 +56,7 @@ def plot_full(df_full_entries, meta_info, params, save_fig_info):
         set_legend(params, "$\mathbf{Algorithms}$")
         set_grid(ax, params)
         if save_fig_info["save"]:
-            save_fig(save_fig_info["save_dir"])
+            save_fig(save_fig_info["save_dir"], metric)
         
         
         plt.show()

@@ -1,13 +1,17 @@
 import argparse
 
+import sys
+sys.path.append('..')
+
+
 # Do something with the input and output files
-from ..plot.read_and_average_csv import read_and_average_csv
-from ..helper import sort_single_dfs, sort_full_dfs, print_result, save_df
+from plot.read_and_average_csv import read_and_average_csv
+from helper import sort_single_dfs, sort_full_dfs, print_result, save_df
 
 
 def main(road_network, algorithm, num_return):
 
-    data = f"../Simulation_Results/{road_network}/Results/"
+    data = f"../../Simulation_Results/{road_network}/Results/"
 
     df_single_entry, df_full_entries, meta_info = read_and_average_csv(data, algorithm)
 
@@ -39,7 +43,9 @@ def main(road_network, algorithm, num_return):
         'Vehicle Speed': 'desc', # Higher is better
         'Waiting Vehicles Per Intersection': 'asc', # Lower is better
         'Waiting Vehicles Per Lane': 'asc', # Lower is better
-        'Waiting Vehicles Per Lane Max': 'asc' # Lower is better
+        'Waiting Vehicles Per Lane Max': 'asc', # Lower is better
+        'Number of Vehicles Currently in Network': 'asc', # Lower is better,
+        'Number of Waiting Vehicles in Buffer': 'asc' # Lower is better
     }
 
 

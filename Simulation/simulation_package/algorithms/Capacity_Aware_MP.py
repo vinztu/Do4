@@ -45,7 +45,7 @@ def Capacity_Aware_MP(sim):
     return highest_phases
 
 
-@ray.remote
+@ray.remote(num_cpus = 1)
 def agent_computation(arguments, intersection):
 
     # compute all pressures per intersection

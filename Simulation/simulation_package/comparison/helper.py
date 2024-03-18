@@ -6,7 +6,10 @@ from collections import defaultdict
 def sort_single_dfs(dfs, sorting_order, num_return = 3):
     # Perform the comparison for each column
     result = {}
-    columns = dfs[list(dfs.keys())[0]].columns
+    columns = list(dfs[list(dfs.keys())[0]].columns)
+    
+    if 'Number Consensus Iterations' in columns:
+        columns.remove('Number Consensus Iterations')
 
     for col in columns:
         if sorting_order[col] == 'asc':
@@ -20,7 +23,10 @@ def sort_single_dfs(dfs, sorting_order, num_return = 3):
 def sort_full_dfs(dfs, sorting_order, num_return = 3):
     # Perform the comparison for each column
     result = defaultdict(list)
-    columns = dfs[list(dfs.keys())[0]]["mean"].columns
+    columns = list(dfs[list(dfs.keys())[0]]["mean"].columns)
+    
+    if 'Number Consensus Iterations' in columns:
+        columns.remove('Number Consensus Iterations')
 
     for col in columns:
         if sorting_order[col] == 'asc':

@@ -148,7 +148,7 @@ def load_parameters_LDPP(algorithm, common_params):
     max_it = 30
     
     # lagrangian parameter rho
-    rho = 0.4
+    rho = 8
     
     # determine domain for z ("binary" or "continuous") --> affects z-update
     z_domain = "binary"
@@ -166,9 +166,9 @@ def load_parameters_LDPP(algorithm, common_params):
     
     if "LDPP-T" in algorithm:
         L = 5 # don't set to 0 (even though V3 = 0)
-        V1 = 1
-        V2 = 2
-        V3 = 0.3
+        V1 = 2
+        V2 = 1
+        V3 = 0.5
         temp = {"L": L, "V1": V1, "V2": V2, "V3": V3}
         
     elif "LDPP-GF" in algorithm:

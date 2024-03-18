@@ -30,9 +30,8 @@ def read_and_average_csv(complete_dir, selective_algorithm = False):
         algorithm_results = complete_dir + algorithm
 
         # all simulation files
-        simulation_runs = listdir(algorithm_results)
+        simulation_runs = [run for run in listdir(algorithm_results) if run.endswith(".csv")]
         
-
         # extract meta information (same for each file in a dir)
         with open(algorithm_results + "/" + simulation_runs[0], "r") as f:
                 # takewhile returns an iterator over all the lines 
@@ -49,7 +48,7 @@ def read_and_average_csv(complete_dir, selective_algorithm = False):
 
 
         for sim_run in simulation_runs:
-
+                
             whole_df = pd.read_csv(algorithm_results + "/" + sim_run, comment = "#")
 
             # Separate dataframe with columns having entries for each time step

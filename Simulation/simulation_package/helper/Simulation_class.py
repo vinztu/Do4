@@ -50,7 +50,7 @@ class Simulation:
         self.intersections_data = None # will be defind in initialization.py
         
         self.__ray_environment()
-        self.__gurobi_environment()
+        self.__centralized_environment()
         
         
     def reset_variables(self, current_round):
@@ -112,13 +112,10 @@ class Simulation:
             self.cpu = int(ray.cluster_resources()['CPU'])
 
     
-    
-    def __gurobi_environment(self):
+    def __centralized_environment(self):
         
-        # list of all algorithms that need gurobi (not done for LDPP, since it cannot be serialized for ray --> env defined in LDPP_helper)
-        gurobi_needed = ["Centralized"]
-        
-        if self.algorithm in gurobi_needed:
+        # not done here for LDPP, since it cannot be serialized for ray --> env defined in LDPP_helper)
+        if self.algorithm in "Centralized":
             import gurobipy as gp
             from gurobipy import GRB
 
