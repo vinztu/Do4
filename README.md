@@ -17,7 +17,7 @@ The simulation folder in `Simulation` is organized as follows:
 - **test.ipynb**: This notebook is used for testing road networks.
 - **Simulation_Results**: All networks, demand files and the simulation results are stored there
 
-The code for the simulation itself is located in Simulation/simulation_package and is organized as follows:
+The code for the simulation itself is located in `Simulation/simulation_package` and is organized as follows:
 
 - **parameter_loader.py**: This file defines various parameters for the simulation for all algorithms.
 - **Generator**: This folder contains the code for generating all possible flow.json and roadnet.json files.
