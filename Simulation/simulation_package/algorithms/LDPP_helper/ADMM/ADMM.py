@@ -174,6 +174,7 @@ def ADMM(sim, pressure_pp, arguments_id):
     # save the number of ADMM-iterations rounds
     sim.params["num_consensus_iterations"].append(tau + 1) # plus 1, since tau starts at 0
     
-    #ray.timeline(filename="ray_timeline_ADMM_Computer_3_4.json")
+    # record the ray timeline to analyse the behaviour
+    #ray.timeline(filename="ray_timeline_ADMM.json")
     
     return x, objective, pressure

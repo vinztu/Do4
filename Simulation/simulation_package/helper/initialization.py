@@ -200,12 +200,10 @@ def initialize(sim, load_capacities):
         sim.params["constant_weight"] = {lane: 1 for lane in sim.lanes_data}
         sim.params["phase_history"] = {intersection: np.ones(sim.params["L"])*(-1) for intersection in sim.intersections_data}
         sim.params["num_consensus_iterations"] = []
-        sim.params["saturation_flow"] = {lane: min(sim.params["capacity"][lane], sim.params["saturation_flow"]) for lane in sim.lanes_data}
     
         
     def LDPP_GF_initialization(sim):
         sim.params["num_consensus_iterations"] = []
-        #sim.params["saturation_flow"] = {min(int(sim.params["capacity"][lane] * 0.5), sim.params["saturation_flow"]) for lane in sim.lanes_data}
 
     def Fixed_Time_initialization(sim):
         
