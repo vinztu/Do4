@@ -1,5 +1,6 @@
 import gurobipy as gp
 from gurobipy import GRB
+from collections import defaultdict
 
 from .model_inflow import traffic_inflow
 from .model_outflow import traffic_outflow
@@ -10,8 +11,8 @@ def traffic_model_prediction(sim, model, opt_vars, lane_vehicle_count):
     
     for tau in range(sim.params["prediction_horizon"] + 1):
         
-        # used in case there are multiple lanes with the same movement_id
-        unique_movement_id = set()
+        # used in case there are multiple lanes with the same movement_id per intersection
+        unique_movement_id = defaultdict(set)
         
         # used in traffic_outflow
         visited_downstream_roads = set()
@@ -59,13 +60,14 @@ def traffic_model_prediction(sim, model, opt_vars, lane_vehicle_count):
             ########## Calculate Pressure per lane #########
             ################################################
             
+            intersection_id = lane_info[0]
             movement_id = lane_info[1]
             
             # if it has a movement_id, then it is not an outflowing link of an intersection
-            if isinstance(movement_id, int) and (movement_id not in unique_movement_id):
+            if isinstance(movement_id, int) and (movement_id not in unique_movement_id[intersection_id]):
                 
                 # add the movement_id to not include it twice
-                unique_movement_id.add(movement_id)
+                unique_movement_id[intersection_id].add(movement_id)
                 
                 # determine which intersection the lane flows in
                 intersection_id = lane_info[0]
@@ -82,7 +84,7 @@ def traffic_model_prediction(sim, model, opt_vars, lane_vehicle_count):
                     total_vehicle_count = sum(lane_vehicle_count[lane] for lane in same_movement_id_lane)
                     
                     model.addConstr((
-                        opt_vars["p_m"][tau, inter_id, movement_id] == total_vehicle_count - gp.quicksum(lane_vehicle_count[d_lane] for d_lane in downstream_lanes) / len(downstream_lanes)
+                        opt_vars["p_m"][tau, inter_id, movement_id] == total_vehicle_count - sum(lane_vehicle_count[d_lane] for d_lane in downstream_lanes) / len(downstream_lanes)
                         ),
                         name = f"p_m_{tau}_{inter_id}_{movement_id}"
                     )

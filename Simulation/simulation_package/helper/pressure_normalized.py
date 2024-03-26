@@ -43,8 +43,8 @@ def compute_normalized_pressure(arguments, intersection):
         d_lane = arguments["lanes_data"][lanes_with_movement_id[0]][3][0]
         
         # d_ab is defined as by Gregoire et al.
-        num_vehicles = np.array(arguments["lane_vehicle_count"][lane] for lane in lanes_with_movement_id)
-        d_ab = 1 if np.all(num_vehicles != 0) else 0
+        num_vehicles = np.array([arguments["lane_vehicle_count"][lane] for lane in lanes_with_movement_id])
+        d_ab = 1 if np.any(num_vehicles != 0) else 0
         
         # !!! Different pressure definition max(0, MP_pressure) (contrary to the definition, the saturation flow rate gets multiplied already here)
         pressure_per_movement[movement_id] = d_ab * max(0, normalize_lane(lanes_with_movement_id[0], arguments) - normalize_lane(d_lane, arguments)) * arguments["params"]["saturation_flow"]

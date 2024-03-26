@@ -5,7 +5,7 @@ def get_unit(metric):
         "Pressure Values": r"Pressure",
         "Travel Time w Buffer": r"Travel Time [sec]",
         "Travel Time wo Buffer": r"Travel Time [sec]",
-        "Throughput": r"$\left[\frac{\textrm{car/intersection}}{\Delta}\right]$",
+        "Throughput": r"$\left[\frac{\mathrm{car/intersection}}{\Delta}\right]$",
         "Vehicle Speed": r"Velocity [m/sec]",
         "Waiting Vehicles Per Intersection": r"Vehicles",
         "Waiting Vehicles Per Lane": r"Vehicles",
@@ -13,6 +13,10 @@ def get_unit(metric):
         "Waiting Time Per Vehicle": r"Vehicles",
         "Waiting Time Per Vehicle Max": r"Vehicles",
         "Number of Stops": r"\# Stops",
-        "Number of Vehicles Entered the Network": r"Vechiles",
-        "Phase Change Frequency": r"Probability [0,1]"
+        "Number of Vehicles Entered the Network": r"Vehicles",
+        "Phase Change Frequency": r"Probability [0,1]",
+        "Number of Vehicles Currently in Network": r"Vehicles",
+        "Number of Waiting Vehicles in Buffer": r"Vehicles"
     }
+    
+    return units[metric]

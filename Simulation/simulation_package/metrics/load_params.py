@@ -22,7 +22,7 @@ def load_specific_params(sim):
             "prediction_horizon": sim.params["prediction_horizon"],
             "num_tl_updates": sim.params["num_tl_updates"],
             "scaling": sim.params["scaling"],
-            "exogenous_inflow": sim.params["exogenous_inflow"],
+            "exogenous_inflow": round(sim.params["exogenous_inflow"]),
             "alpha": sim.params["alpha"]
         }
         important_info = important_info + list(specific_params.values())

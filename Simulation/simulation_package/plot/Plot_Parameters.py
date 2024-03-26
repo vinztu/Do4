@@ -1,5 +1,7 @@
 from figure_size import set_size
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 class PlotParameters:
     
@@ -7,12 +9,19 @@ class PlotParameters:
         self.latex_width = latex_width
         self.Figure = self.Figure(self)
         
+        tex_fonts = {
+            "text.usetex": True,
+            "font.family": "Computer Modern Roman"
+        }
+        plt.rcParams.update(tex_fonts)
+        plt.style.use('seaborn-v0_8-paper')
+        
     class Figure:
         def __init__(self, outer_class):
             self.latex_width = outer_class.latex_width
-            self.figsize = set_size(self.latex_width, fraction = 0.475, subplots = (1,1))
+            self.figsize = set_size(self.latex_width, fraction = 1, subplots = (1,1))
             
-        colors = plt.cm.Set1
+        colors = plt.cm.tab10
         facecolor = "w"
         edgecolor = "k"
 
@@ -25,9 +34,10 @@ class PlotParameters:
         capsize = 3
         capthick = 0.5
         alpha = 0.7
-        text_font_size = 11
-        text_font_weight = "bold"
-        text_font_style = "oblique"
+        text_font_size = 10
+        text_font_weight = "normal"
+        text_font_style = "normal"#"oblique"
+        text_font_family = "serif"
         
     class Grid:
         linewidth = 0.5
@@ -35,44 +45,48 @@ class PlotParameters:
         alpha = 0.8
 
     class Title:
-        fontsize = 11
-        pad = 1
+        fontsize = 10
+        pad = 6
         fontweight = "bold"
+        family = "serif"
 
     class Labels:
         labelpad = 10
-        labelsize = 11
+        labelsize = 10
         style = "italic"
-        x_lab_size = 11
         tick_params = 3
-        fontsize = 11
-        fontweight = "bold"
-    
+        fontsize = 10
+        fontweight = "regular"
+        family = "serif"
+
     class Ticks:
         number_minor = 3
-        minor_width = 0.5
-        major_width = 1.5
-        minor_length = 4
-        major_length = 6
+        minor_width = 0.3
+        major_width = 0.8
+        minor_length = 2
+        major_length = 4
         direction = "in"
         minor_pad = 3
         major_pad = 5
-        labelsize = 11
+        labelsize = 8
         labelcolor = "black"
 
     class Legend:
-        loc = "upper center" #"upper right"
+        loc = "best"
         frameone = True
-        fontsize = 9
-        title_fontsize = 11
-        borderaxespad = 0.5
-        borderpad = 1
-        labelspacing = 1.0
-        handlelength = 2.0
+        fontsize = 8
+        title_fontsize = 8
+        borderaxespad = 0
+        borderpad = 0.4
+        labelspacing = 0.3
+        handlelength = 0.3
+        graph_linewidth = 1.0
         edgecolor = "black"
         facecolor = "white"
-        linewidth = 1.0
+        family = "serif"
+        linewidth = 0.5
         alpha = 0.8
-        bbox_to_anchor = (0.5, 1.25) #(0.98, 0.93)
+        bbox_to_anchor = None# (0.5, 1.25) #(0.98, 0.93)
         fancybox = True
-        ncol = 3
+        ncol = 2
+        columnspacing = 0.5

@@ -36,7 +36,7 @@ def load_parameters_common(road_network, ext_dict):
     saturation_flow = 0.7
 
     # capacity of a lane (can load a json file in initialization.py with individual capacities)
-    capacity = 25
+    capacity = 30  #25
 
     common_params = {
         "thread_num": thread_num,
@@ -108,23 +108,22 @@ def load_parameters_Centralized(common_params):
     
     # reduces the amount of variables by /scaling (SCALING <= DELTA)
     # only predict each x-th time step
-    scaling = 10
+    scaling = 20
     
     # number of planning steps (actual horizon is * scaling)
-    prediction_horizon = 2
+    prediction_horizon = 1
     
     # number of tl updates within the prediction horizon time span
     num_tl_updates = ((prediction_horizon * scaling) // common_params["delta"]) + 1
     
     # number of vehicles that enter from the outside per time step
-    exogenous_inflow = common_params["saturation_flow"] * scaling
+    exogenous_inflow = 10 #common_params["saturation_flow"] * scaling
     
     # saturation flow rate
-    saturation_flow = common_params["saturation_flow"] * scaling
+    saturation_flow = 10 #common_params["saturation_flow"] * scaling
     
     # discount parameter
-    alpha = 0.5                                                                               
-    
+    alpha = 0.6                                                                             
     
     centralized_params = {
         "prediction_horizon": prediction_horizon,

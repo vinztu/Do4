@@ -19,6 +19,7 @@ def plot_full(df_full_entries, meta_info, params, save_fig_info):
     
     # create a color map
     clrs = params.Figure.colors(np.linspace(0, 1, len(df_full_entries)))
+    clrs = params.Figure.colors(range(10))
     
     for metric in all_metrics:
         
@@ -35,7 +36,7 @@ def plot_full(df_full_entries, meta_info, params, save_fig_info):
         for i, (algorithm, dataframe) in enumerate(df_full_entries.items()):
             
             # create label naming
-            label = label_name(algorithm, meta_info, params)
+            label = label_name(algorithm, meta_info, params, save_fig_info)
                 
             # extract mean and std info for specific algorithms
             mean = dataframe["mean"][metric]
@@ -50,11 +51,16 @@ def plot_full(df_full_entries, meta_info, params, save_fig_info):
                          color = clrs[i])
             
             
-
-        set_labels(ax, params, x_label, y_label, metric, True)
+        set_labels(ax, params, x_label, y_label, metric, save_fig_info)
         set_ticks(ax, params)
-        set_legend(params, "$\mathbf{Algorithms}$")
+        
+        #if not save_fig_info["save_legend"]:
+        set_legend(params, "") #"$\mathbf{Algorithms}$")
+            
         set_grid(ax, params)
+        
+        plt.tight_layout()
+        
         if save_fig_info["save"]:
             save_fig(save_fig_info["save_dir"], metric)
         

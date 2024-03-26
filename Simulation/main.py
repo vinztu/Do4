@@ -56,19 +56,18 @@ import json
 delta_and_idle = [(20, 0)]
 # small between 12 - 15 cars per lane
 #capacity = [13, 25]
-#V1 = [0, 1, 3]
-#V2 = [0, 1, 3]
+V1 = [5, 15, 20]
+V2 = [0, 2, 5]
 #V3 = [0, 1, 3]
 #L = [5, 20]
 #rho = [0.5, 2]
-
 
 # used algorithm
 # Fixed-Time, MP, CA_MP, Centralized, LDPP + T/GF + ADMM/Greedy
 algorithm = "LDPP-T-ADMM"
 
 # Specify which road network to use (dir name)
-road_network = "3_4_Fine"
+road_network = "Manhattan"
 
 # write phase definitions back to roadnet file
 write_phase_to_json = True if road_network != "Manhattan" else False
@@ -77,10 +76,10 @@ write_phase_to_json = True if road_network != "Manhattan" else False
 load_capacities = False if road_network != "Manhattan" else True
 
 # Generate all possible combinations of parameter values
-parameter_combinations = product(delta_and_idle)#, capacity, V1, V2, V3, L, rho)
+parameter_combinations = product(delta_and_idle, V1, V2)#, capacity, V1, V2, V3, L, rho)
 
 
-retrieve_ADMM_objective = {40: None, 60: None, 100: None, 200: None, 500: None, 1000: None, 1500: None, 2000: None}
+retrieve_ADMM_objective = {0: None, 20: None, 40: None, 60: None, 100: None, 200: None, 500: None, 1000: None, 1500: None, 2000: None}
 global_objective = {}
 
 
@@ -89,9 +88,8 @@ for i, combination in enumerate(parameter_combinations):
     ext_dict = {
         "delta": combination[0][0],
         "idle_time": combination[0][1],
-        #"capacity": combination[1],
-        #"V1": combination[2],
-        #"V2": combination[3],
+        "V1": combination[1],
+        "V2": combination[2],
         #"V3": combination[4],
         #"L": combination[5],
         #"rho": combination[6]

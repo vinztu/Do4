@@ -1,6 +1,8 @@
 import gurobipy as gp
 from gurobipy import GRB
 
+from pprint import pprint
+
 def optimizer(sim, model, opt_vars):
     """ Calls the optimizer from gurobi and retrieves the optimal solution"""
     
@@ -42,7 +44,6 @@ def optimizer(sim, model, opt_vars):
     
     except AttributeError:
         print(f"Encountered an attribute error: {AttributeError}")
-        
     
     return optimal_phases
 

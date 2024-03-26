@@ -32,7 +32,7 @@ def create_model_and_variables(sim):
     q = model.addVars(range(1,sim.params["prediction_horizon"] + 1), sim.lanes_data.keys(), vtype = GRB.CONTINUOUS, lb = 0, ub = max_capacity, name = "q")
     
     # pressure per movement
-    p_m = model.addVars(sim.params["prediction_horizon"] + 1, sim.intersections_data.keys(), sim.params["movements"], lb = -max_capacity, ub = max_capacity, vtype = GRB.CONTINUOUS, name = "p_m")
+    p_m = model.addVars(sim.params["prediction_horizon"] + 1, sim.intersections_data.keys(), sim.params["movements"], lb = -2*max_capacity, ub = 2*max_capacity, vtype = GRB.CONTINUOUS, name = "p_m")
     
     # pressure per phase
     p_p = model.addVars(

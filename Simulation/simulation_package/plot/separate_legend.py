@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 def create_separate_legend(ax, params, save_fig_info):
     fig_leg = plt.figure(figsize=params.Figure.figsize)
     ax_leg = fig_leg.add_subplot(111)
