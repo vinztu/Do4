@@ -72,11 +72,13 @@ def compute_normalized_pressure(arguments, intersection):
 def normalize_lane(lane, arguments):
     """ Definition according to Jean Gregoire et al."""
 
+    filtered_lanes = [l for l in arguments["lanes_data"] if l[:-2] in lane]
+    
     # !!! Difference to MP: Consider all vehicles on a ROAD (not lane) to calculate the pressure
-    num_vehicles = sum(arguments["lane_vehicle_count"][l] for l in arguments["lanes_data"] if l[:-2] in lane)
+    num_vehicles = sum(arguments["lane_vehicle_count"][l] for l in filtered_lanes)
     
     # Total Capacity of all lanes
-    total_capacity = sum(arguments["params"]["capacity"][l] for l in arguments["lanes_data"] if l[:-2] in lane)
+    total_capacity = sum(arguments["params"]["capacity"][l] for l in filtered_lanes)
     
     nominator = (num_vehicles/arguments["params"]["c_inf"]) + ((2 - (total_capacity/arguments["params"]["c_inf"])) * ((num_vehicles/total_capacity) ** arguments["params"]["m"]))
     
