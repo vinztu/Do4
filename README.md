@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository contains a simulation study on traffic signal control using the Maximum Pressure algorithm and the Lyapunov Drift Plus Penalty theory. The study was conducted by vinztu and kenanz0630 and zyhe from ETH Zürich and EPFL Lausanne. The simulation is based on a theoretical analysis presented in our forthcoming paper, ???.
+This repository contains a simulation study on traffic signal control using the Maximum Pressure algorithm and the Lyapunov Drift Plus Penalty theory. The study was conducted by vinztu and kenanz0630 and zyhe from ETH Zürich and EPFL Lausanne. The simulation is based on a theoretical analysis presented in our forthcoming paper, *Distributed Traffic Signal Control via Coordinated Maximum Pressure-plus-Penalty* (<http://arxiv.org/abs/2404.19547>).
 
 The simulation uses the famous Maximum Pressure algorithm and the Lyapunov Drift Plus Penalty theory to evaluate the performance of different traffic signal control algorithms. The simulation results are compared using sensitivity analysis to analyze the impact of different parameters on the performance of the algorithms.
 
